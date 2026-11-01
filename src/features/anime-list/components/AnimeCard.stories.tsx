@@ -23,8 +23,16 @@ const meta = {
   parameters: {
     a11y: {
       config: {
-        // Contraste do Figma mantido por decisão do dono; ver DECISIONS.md
-        rules: [{ id: 'color-contrast', enabled: false }],
+        // Contraste do Figma mantido por decisão do dono; ver DECISIONS.md. Só o selo de
+        // nota (data-tone) fica fora da regra: os chips de gênero continuam checados.
+        rules: [{ id: 'color-contrast', selector: '*:not([data-tone]):not([data-tone] *)' }],
+      },
+      options: {
+        // O degradê do card é um ::after com fundo, e o axe desiste ("incomplete") de todo
+        // texto acima dele. Os chips têm fundo próprio e opaco, então o degradê não muda o
+        // contraste deles. Vai nas opções do run, que se somam às padrão: no config, elas
+        // substituiriam as padrão e o axe perderia os limites de contraste.
+        checks: { 'color-contrast': { options: { ignorePseudo: true } } },
       },
     },
   },
