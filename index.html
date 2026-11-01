@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Busque e filtre animes da AniList." />
     <title>BuscAnime</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Abre a conexão com a API e com o servidor das capas enquanto o JavaScript
+         ainda carrega: a capa do primeiro card (o LCP) só é descoberta depois da
+         resposta da API. -->
+    <link rel="preconnect" href="https://graphql.anilist.co" crossorigin />
+    <link rel="preconnect" href="https://s4.anilist.co" />
   </head>
   <body>
     <div id="root"></div>
