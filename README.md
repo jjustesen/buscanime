@@ -100,7 +100,7 @@ src/
 | O quê                                                                          | Arquivo                                      | Onde roda                     |
 | ------------------------------------------------------------------------------ | -------------------------------------------- | ----------------------------- |
 | Componentes (card, selo, filtros, busca, grade, "Ver mais", mensagens, layout) | `*.stories.tsx`, função `play` de cada story | Vitest no Chromium, com o axe |
-| Funções puras, hooks e o cliente da AniList                                    | `*.test.ts`                                  | Vitest no jsdom               |
+| Funções puras, hooks e o cliente da AniList                                    | `*.test.ts(x)`                               | Vitest no jsdom               |
 | A página inteira, com a API simulada (MSW)                                     | `AnimeListPage.test.tsx`                     | Vitest no jsdom               |
 
 Os componentes não têm `*.test.tsx` próprio: o teste deles é a story, que roda como
