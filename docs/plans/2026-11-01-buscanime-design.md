@@ -19,6 +19,8 @@ até 3 gêneros e a nota (`averageScore`) com cor por faixa.
 | Tipos da API | Escritos à mão | Uma query, poucos campos. graphql-codegen fica para "com mais tempo". |
 | Estado | Filtro e busca na URL; texto digitado é estado local | Link compartilhável, voltar funciona, digitar não re-renderiza a grade. |
 | Testes | Vitest + Testing Library + MSW | Testa como a pessoa usa a tela, sem depender da internet. |
+| Componentes | Storybook 10 + `addon-vitest` + `addon-a11y`, publicado em `/storybook/` | Cada estado do componente visível e testado (render, interação e axe). |
+| Convenções | `docs/CONVENTIONS.md`, checadas pelo ESLint quando possível | Fronteiras de pasta, JSDoc em todo tipo, exports nomeados, idioma. |
 | Desempenho | `size-limit` no CI e Lighthouse na versão publicada | Prova com números, não com "deve estar rápido". |
 | Publicação | Vercel | Funciona com Vite sem configuração. |
 | Fonte | `@fontsource/mulish` (400, 600, 700, latin) | Fonte dentro do projeto, sem Google Fonts. |
@@ -130,11 +132,12 @@ App
 
 ## Testes
 
-- `scoreTone`: 0, 49, 50, 80, 81, 100 e nulo.
+- `scoreTone`: 0, 49, 50, 80, 81 e 100.
 - `useListParams`: lê a URL inicial, escreve, reage ao botão voltar.
 - `fetchAnimePage`: monta as variáveis certas, converte a resposta, trata 429, 500 e
   erro do GraphQL.
-- `AnimeCard`: título, até 3 gêneros, cor da nota, sem selo quando a nota é nula.
+- Componentes de apresentação: stories com `play` e axe. No `AnimeCard`: título, até 3
+  gêneros, cor da nota, sem selo quando a nota é nula, título longo, imagem quebrada.
 - Página com a API simulada (MSW): carrega, filtra, busca, "Ver mais", sem resultado,
   erro e "Tentar de novo", digitar não dispara pedido.
 

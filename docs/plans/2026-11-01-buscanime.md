@@ -10,9 +10,16 @@ desempenho), qualidade de produto, maturidade e uso de IA. Na entrevista, o auto
 precisa explicar cada linha e evoluir o projeto ao vivo, então o código deve ser
 simples e direto.
 
-O design e as decisões estão em `docs/plans/2026-11-01-buscanime-design.md`. Cores,
+O design e as decisões estão em `docs/plans/2026-11-01-buscanime-design.md`. As regras
+de estrutura, tipos, testes, Storybook e idioma estão em `docs/CONVENTIONS.md`. Cores,
 fontes e medidas exatas estão em `docs/figma/spec.md`. O print da tela está em
-`docs/figma/desktop.png`. Leia os três antes de começar.
+`docs/figma/desktop.png`. Leia os quatro antes de começar.
+
+Lembretes das convenções que mais afetam este plano:
+- Toda `interface`/`type` e cada prop têm comentário JSDoc (o lint cobra).
+- Componentes de apresentação são testados por stories com `play`, não por `.test.tsx`.
+- Estado visual sai em atributo (`data-tone`, `aria-pressed`), não em classe.
+- Exports nomeados. Comentários em português, código em inglês.
 
 A API é a AniList (GraphQL, `POST https://graphql.anilist.co`), sem autenticação e com
 CORS liberado. Ela limita a 30 pedidos por minuto e ignora argumentos nulos, então
@@ -49,12 +56,17 @@ AnimePage: items: Anime[], page: number, hasNextPage: boolean
 Criados na Task 1 e usados em todas as tasks:
 
 ```bash
-npm run lint        # ESLint
-npm run typecheck   # tsc -b
-npm test            # vitest run
-npm run build       # vite build
-npm run size        # size-limit (roda depois do build)
+npm run lint             # ESLint
+npm run typecheck        # tsc -b
+npm test                 # vitest run: projeto "unit" (jsdom) + projeto "storybook" (Chromium)
+npm run test:unit        # só o projeto "unit", mais rápido no dia a dia
+npm run build            # app em dist/ e Storybook em dist/storybook/
+npm run size             # size-limit (roda depois do build)
+npm run storybook        # Storybook em modo de desenvolvimento
 ```
+
+O projeto "storybook" do Vitest precisa do Chromium do Playwright. Na primeira vez:
+`npx playwright install chromium`.
 
 ## Pull request layout
 
@@ -65,8 +77,8 @@ Esse commit no `main` precisa do OK do dono.
 Os PRs são empilhados: cada um parte do anterior.
 
 ### PR1 feature/setup main: base do projeto
-Motivation: Vite, TypeScript, lint, testes, tokens do Figma, fonte, header, footer e CI
-prontos antes de qualquer funcionalidade.
+Motivation: Vite, TypeScript, lint (com fronteiras e JSDoc), testes, Storybook, tokens
+do Figma, fonte, header, footer e CI prontos antes de qualquer funcionalidade.
 
 ### PR2 feature/anilist-client feature/setup: cliente da AniList
 Motivation: a busca de dados isolada e testada, sem tela.
@@ -81,7 +93,8 @@ Motivation: junta tudo e entrega o pedido do enunciado.
 Motivation: o que o enunciado não pede, mas a avaliação cobra.
 
 ### PR6 feature/docs-deploy feature/polish: README, DECISIONS, AI_LOG e publicação
-Motivation: a entrega final, com Lighthouse medido na versão publicada.
+Motivation: a entrega final, com o app e o Storybook publicados e o Lighthouse medido
+na versão publicada.
 
 ## Backwards compatibility
 
@@ -94,12 +107,15 @@ Status: TODO
 
 #### Files
 - Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `tsconfig.app.json`,
-  `tsconfig.node.json`, `index.html`, `eslint.config.js`, `.prettierrc`, `.gitignore`,
-  `.size-limit.json`, `.github/workflows/ci.yml`
+  `tsconfig.node.json`, `index.html`, `eslint.config.js`, `.prettierrc`,
+  `.gitattributes`, `.size-limit.json`, `.github/workflows/ci.yml`
+- Modify: `.gitignore` (somar `storybook-static/`)
+- Create: `.storybook/main.ts`, `.storybook/preview.ts`, `.storybook/vitest.setup.ts`
 - Create: `src/main.tsx`, `src/App.tsx`, `src/App.module.css`, `src/vite-env.d.ts`
-- Create: `src/styles/tokens.css`, `src/styles/global.css`
-- Create: `src/components/layout/Header.tsx`, `Header.module.css`, `Footer.tsx`,
-  `Footer.module.css`, `Logo.tsx`, `Logo.module.css`
+- Create: `src/styles/tokens.css`, `src/styles/global.css`, `src/styles/fonts.ts`
+- Create: `src/components/layout/Header.tsx`, `Header.module.css`, `Header.stories.tsx`
+- Create: `src/components/layout/Footer.tsx`, `Footer.module.css`, `Footer.stories.tsx`
+- Create: `src/components/layout/Logo.tsx`, `Logo.module.css`, `Logo.stories.tsx`
 - Create: `src/test/setup.ts`
 - Create: `README.md`, `DECISIONS.md`, `AI_LOG.md`
 - Test: `src/App.test.tsx`
@@ -110,28 +126,97 @@ Criar com `npm create vite@latest . -- --template react-ts` e depois instalar:
 
 ```bash
 npm i @tanstack/react-query @fontsource/mulish
-npm i -D vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom msw size-limit @size-limit/preset-app prettier eslint-plugin-jsx-a11y eslint-config-prettier
+npm i -D vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom msw size-limit @size-limit/preset-app prettier eslint-plugin-jsx-a11y eslint-config-prettier eslint-plugin-jsdoc
+npm create storybook@latest -- --yes --features docs test a11y
 ```
+
+O `create storybook` instala o Storybook 10 com `@storybook/react-vite`,
+`@storybook/addon-docs`, `@storybook/addon-a11y`, `@storybook/addon-vitest`,
+`@vitest/browser-playwright` e o Chromium. Confira o que ele gerou e apague as
+stories de exemplo (`src/stories/`).
 
 Scripts no `package.json`:
 
 ```json
 {
   "dev": "vite",
-  "build": "tsc -b && vite build",
+  "build": "tsc -b && vite build && storybook build -o dist/storybook --quiet",
   "preview": "vite preview",
   "lint": "eslint .",
   "typecheck": "tsc -b",
   "test": "vitest run",
-  "test:watch": "vitest",
-  "size": "size-limit"
+  "test:unit": "vitest run --project unit",
+  "test:watch": "vitest --project unit",
+  "size": "size-limit",
+  "storybook": "storybook dev -p 6006"
 }
 ```
 
-`vite.config.ts` com o bloco de teste:
+`vite.config.ts` com dois projetos de teste:
 
 ```ts
-test: { environment: 'jsdom', setupFiles: './src/test/setup.ts', css: { modules: { classNameStrategy: 'non-scoped' } } }
+test: {
+  projects: [
+    {
+      extends: true,
+      test: { name: 'unit', environment: 'jsdom', setupFiles: './src/test/setup.ts', include: ['src/**/*.test.{ts,tsx}'] },
+    },
+    {
+      extends: true,
+      plugins: [storybookTest({ configDir: '.storybook' })],
+      test: {
+        name: 'storybook',
+        browser: { enabled: true, headless: true, provider: playwright(), instances: [{ browser: 'chromium' }] },
+        setupFiles: ['.storybook/vitest.setup.ts'],
+      },
+    },
+  ],
+}
+```
+
+`.storybook/preview.ts` importa `src/styles/fonts.ts`, `tokens.css` e `global.css`
+(os mesmos do `main.tsx`), e liga o axe para falhar o teste:
+`parameters: { a11y: { test: 'error' } }`.
+
+`.gitattributes`: `* text=auto eol=lf`, para o Windows não trocar as quebras de linha.
+
+`eslint.config.js`, além do padrão do Vite (typescript-eslint, react-hooks) e do
+`jsx-a11y`:
+
+```js
+// Fronteiras de docs/CONVENTIONS.md, seção 1
+{ files: ['src/api/**'], rules: { 'no-restricted-imports': ['error', { patterns: ['react', '**/features/**', '**/components/**'] }] } },
+{ files: ['src/components/**'], rules: { 'no-restricted-imports': ['error', { patterns: ['**/features/**', '**/api/**'] }] } },
+{ files: ['src/**/lib/**'], rules: { 'no-restricted-imports': ['error', { patterns: ['react', 'react-dom'] }] } },
+// Descrição em cada tipo e prop: docs/CONVENTIONS.md, seção 5
+{
+  files: ['src/**/*.{ts,tsx}'],
+  ignores: ['src/**/*.stories.tsx', 'src/**/*.test.{ts,tsx}'],
+  plugins: { jsdoc },
+  rules: {
+    'jsdoc/require-jsdoc': ['error', { publicOnly: false, require: {}, contexts: ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration', 'TSPropertySignature'] }],
+  },
+},
+// Exports nomeados
+{ files: ['src/**/*.{ts,tsx}'], ignores: ['src/**/*.stories.tsx'], rules: { 'no-restricted-exports': ['error', { restrictDefaultExports: { direct: true, named: true, defaultFrom: true, namedFrom: true, namespaceFrom: true } }] } },
+eslintConfigPrettier,
+```
+
+Story de exemplo (padrão para todas):
+
+```tsx
+// Logo.stories.tsx
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { Logo } from './Logo'
+
+const meta = { component: Logo, tags: ['autodocs'] } satisfies Meta<typeof Logo>
+export default meta
+type Story = StoryObj<typeof meta>
+
+/** Tamanho usado no header (40 px). */
+export const Large: Story = { args: { size: 'lg' } }
+/** Tamanho usado no footer (24 px). */
+export const Small: Story = { args: { size: 'sm' } }
 ```
 
 `.size-limit.json`:
@@ -160,21 +245,24 @@ test: { environment: 'jsdom', setupFiles: './src/test/setup.ts', css: { modules:
 }
 ```
 
-`src/main.tsx` importa `@fontsource/mulish/latin-400.css`, `latin-600.css`,
-`latin-700.css`, `tokens.css` e `global.css`, cria o `QueryClient` e renderiza `<App />`
-dentro do `QueryClientProvider`.
+`src/styles/fonts.ts` importa `@fontsource/mulish/latin-400.css`, `latin-600.css` e
+`latin-700.css`. `src/main.tsx` importa `fonts.ts`, `tokens.css` e `global.css`, cria
+o `QueryClient` e renderiza `<App />` dentro do `QueryClientProvider`.
 
 `Logo` recebe `size: 'lg' | 'sm'` (40 px no header, 24 px no footer) e desenha
 `BUSC<span>ANIME</span>`, com o span em `--color-warning`.
 
 `App` = `<Header />` + `<main>` (vazio nesta task) + `<Footer />`.
 
-CI (`.github/workflows/ci.yml`): Node 24, `npm ci`, lint, typecheck, test, build, size.
+CI (`.github/workflows/ci.yml`): Node 24, `npm ci`,
+`npx playwright install --with-deps chromium`, lint, typecheck, test, build, size.
 
 #### Step 1: Test-driven implementation
 Teste em `src/App.test.tsx`: renderiza o App e encontra o logo no header (`banner`) e o
-texto "TODOS OS DIREITOS RESERVADOS" no footer (`contentinfo`). Rode `npm test` e
-`npm run lint`.
+texto "TODOS OS DIREITOS RESERVADOS" no footer (`contentinfo`). Stories de `Logo`,
+`Header` e `Footer`. Confirme que o lint pega as regras novas: um `export default`, uma
+prop sem JSDoc e um import de `features/` dentro de `components/` precisam falhar
+(teste à mão e desfaça). Rode `npm test` e `npm run lint`.
 
 #### Step 2: Simplify the code
 Use the simplify-code skill. Rerun the tests.
@@ -229,17 +317,52 @@ export function isFormatFilter(value: string | null): value is FormatFilter
 ```
 
 ```ts
-// types.ts
+// types.ts — cada tipo e cada prop com JSDoc (docs/CONVENTIONS.md, seção 5)
+/** Anime já convertido da resposta da AniList para o formato que a tela usa. */
 export interface Anime {
+  /** ID da AniList. Único, usado como `key` e para remover repetidos entre páginas. */
   id: number
+  /** Título em romaji, como no Figma. Cai para `userPreferred` se vier vazio. */
   title: string
-  cover: { medium: string; large: string; color: string | null }
+  /** Capa do anime em dois tamanhos, para o `srcset`. */
+  cover: AnimeCover
+  /** Até 3 gêneros, na ordem da AniList. Pode ser vazio. */
   genres: string[]
+  /** Nota média de 0 a 100. `null` quando a AniList ainda não tem votos suficientes. */
   averageScore: number | null
 }
-export interface AnimePage { items: Anime[]; page: number; hasNextPage: boolean }
-export interface ListParams { format: FormatFilter; search: string }
+
+/** Imagens da capa. A AniList não redimensiona, então usamos os tamanhos que ela tem. */
+export interface AnimeCover {
+  /** URL da capa com 230 px de largura (`coverImage.large` na API). */
+  medium: string
+  /** URL da capa com 460 px de largura (`coverImage.extraLarge` na API). */
+  large: string
+  /** Cor média da capa em hex, usada como fundo enquanto a imagem carrega. Pode faltar. */
+  color: string | null
+}
+
+/** Uma página de resultados, já convertida. */
+export interface AnimePage {
+  /** Animes desta página, no máximo `PAGE_SIZE`. */
+  items: Anime[]
+  /** Número da página, começando em 1. */
+  page: number
+  /** `true` quando existe uma próxima página; controla o botão "Ver mais". */
+  hasNextPage: boolean
+}
+
+/** Filtros da lista, espelhados na URL. */
+export interface ListParams {
+  /** Formato escolhido nos botões; `ALL` não filtra. */
+  format: FormatFilter
+  /** Texto buscado. String vazia significa "sem busca". */
+  search: string
+}
 ```
+
+Os tipos crus da resposta da AniList (`AniListMedia`, `AniListPageResponse`) ficam
+dentro de `anilist.ts`, não são exportados e também levam JSDoc.
 
 ```graphql
 # queries.ts (exportado como string ANIME_PAGE_QUERY)
@@ -306,7 +429,11 @@ function toAnime(m): Anime {
 ```
 
 MSW: `handlers.ts` responde ao `POST` da AniList com `fixtures.ts` (24 animes falsos,
-2 páginas de 12), filtrando por `format` e `search` das variáveis. Os testes trocam o
+2 páginas de 12), filtrando por `format` e `search` das variáveis. `fixtures.ts`
+também exporta animes prontos para as stories: `animeHighScore` (87),
+`animeMidScore` (80), `animeLowScore` (48), `animeNoScore` (null), `animeLongTitle`,
+`animeNoGenres` e `animeBrokenImage`. As capas das fixtures são arquivos locais em
+`src/test/mocks/covers/`, para os testes e as stories não dependerem da internet. Os testes trocam o
 handler com `server.use(...)` para simular 429, 500 e lista vazia.
 
 #### Step 1: Test-driven implementation
@@ -351,7 +478,9 @@ Status: TODO
 - Create: `src/features/anime-list/components/ScoreBadge.tsx`, `ScoreBadge.module.css`
 - Create: `src/features/anime-list/components/CardSkeleton.tsx`, `CardSkeleton.module.css`
 - Test: `src/features/anime-list/lib/scoreTone.test.ts`
-- Test: `src/features/anime-list/components/AnimeCard.test.tsx`
+- Test: `src/features/anime-list/components/AnimeCard.stories.tsx`
+- Test: `src/features/anime-list/components/ScoreBadge.stories.tsx`
+- Test: `src/features/anime-list/components/CardSkeleton.stories.tsx`
 
 #### Pseudocode
 
@@ -367,15 +496,26 @@ export function scoreTone(score: number): ScoreTone {
 
 ```tsx
 // ScoreBadge.tsx
-export function ScoreBadge({ score }: { score: number }) {
+/** Props do selo de nota. */
+export interface ScoreBadgeProps {
+  /** Nota média de 0 a 100. A cor sai de `scoreTone`. */
+  score: number
+}
+export function ScoreBadge({ score }: ScoreBadgeProps) {
   return (
-    <span className={`${styles.badge} ${styles[scoreTone(score)]}`}>
+    <span className={styles.badge} data-tone={scoreTone(score)}>
       <span className="visually-hidden">Nota média: </span>{score}%
     </span>
   )
 }
-// .low { background: var(--color-danger) } .mid { --color-warning } .high { --color-success }
+// [data-tone='low'] { background: var(--color-danger) }
+// [data-tone='mid'] { background: var(--color-warning) }
+// [data-tone='high'] { background: var(--color-success) }
 ```
+
+As stories do `ScoreBadge` e do `AnimeCard` desligam só a regra `color-contrast` do
+axe, com o comentário: "Contraste do Figma mantido por decisão do dono; ver
+DECISIONS.md". As outras regras do axe continuam valendo.
 
 ```tsx
 // AnimeCard.tsx
@@ -415,13 +555,20 @@ acima dele (`z-index: 1`), 28 px da esquerda e 23 px do topo. O título usa
 #### Step 1: Test-driven implementation
 `scoreTone.test.ts` com `it.each`: 0 e 49 → `low`; 50 e 80 → `mid`; 81 e 100 → `high`.
 
-`AnimeCard.test.tsx`:
-- mostra o título como heading;
-- mostra cada gênero;
-- nota 80 tem a classe `mid` e o texto "80%";
-- nota `null` não mostra selo;
-- `priority="lazy"` gera `loading="lazy"`, `priority="high"` gera `loading="eager"` e
-  `fetchpriority="high"`.
+`ScoreBadge.stories.tsx`: `Low` (48), `MidLowerBound` (50), `MidUpperBound` (80),
+`High` (81). Cada uma tem um `play` que confere o texto ("80%") e o `data-tone`.
+
+`AnimeCard.stories.tsx`, com as fixtures da Task 2 e um `play` em cada:
+- `Default`: o título é um heading e cada gênero aparece;
+- `MidScore`: nota 80 com `data-tone="mid"` e texto "80%";
+- `NoScore`: sem selo;
+- `LongTitle`: o título continua um heading só (o corte é visual);
+- `NoGenres`: sem a lista de gêneros;
+- `BrokenImage`: o card continua com título e cor de fundo;
+- `HighPriority`: a imagem tem `loading="eager"` e `fetchpriority="high"`;
+- `Lazy`: a imagem tem `loading="lazy"`.
+
+`CardSkeleton.stories.tsx`: `Default`, com `play` que confere `aria-hidden`.
 
 Rode `npm test` e `npm run lint`.
 
@@ -528,6 +675,8 @@ Status: TODO
 - Create: `src/features/anime-list/components/AnimeGrid.tsx`, `AnimeGrid.module.css`
 - Create: `src/features/anime-list/components/LoadMoreButton.tsx`, `LoadMoreButton.module.css`
 - Create: `src/features/anime-list/components/StatusMessage.tsx`, `StatusMessage.module.css`
+- Create: um `.stories.tsx` ao lado de cada componente novo acima (`FormatFilter`,
+  `SearchBar`, `AnimeGrid`, `LoadMoreButton`, `StatusMessage`)
 - Create: `src/assets/icon-add.svg` (copiar de `docs/figma/icon-add.svg`)
 - Modify: `src/main.tsx` (regra de `retry` no `QueryClient`)
 - Modify: `src/App.tsx` (renderiza `AnimeListPage` dentro do `<main>`)
@@ -603,7 +752,8 @@ export function AnimeListPage() {
     <>
       <FormatFilter value={params.format} onChange={(format) => setParams({ ...params, format })} />
       <SearchBar initialValue={params.search} onSearch={(search) => setParams({ ...params, search })} />
-      <StatusMessage list={list} search={params.search} onClear={() => setParams({ ...params, search: '' })} />
+      <StatusMessage status={list.status} count={list.animes.length} search={params.search}
+        onRetry={() => list.refetch()} onClear={() => setParams({ ...params, search: '' })} />
       {list.animes.length > 0 && (
         <AnimeGrid animes={list.animes} busy={list.isPlaceholderData} focusIndex={firstNewIndex} />
       )}
@@ -631,6 +781,22 @@ não for nulo, foca o `<li>` desse índice e zera o ref. Os 4 primeiros cards re
 "Carregando...".
 
 #### Step 1: Test-driven implementation
+Stories com `play` (componentes de apresentação, com `fn()` do `storybook/test` nos
+callbacks):
+- `FormatFilter`: `AllSelected` e `MovieSelected`; o `play` clica em "OVA" e confere
+  `onChange('OVA')`.
+- `SearchBar`: `Empty` e `WithValue`; o `play` digita, aperta Enter e confere
+  `onSearch` chamado uma vez com o texto; digitar sem enviar não chama `onSearch`.
+- `AnimeGrid`: `Default` (12 cards) e `Busy` (`aria-busy="true"`).
+- `LoadMoreButton`: `Idle` (clicar chama `onClick`) e `Loading` (desabilitado,
+  "Carregando...").
+- `StatusMessage`: `Loading`, `Empty` (clicar em "Limpar busca" chama `onClear`),
+  `Error` (clicar em "Tentar de novo" chama `onRetry`) e `Loaded` (texto só para leitor
+  de tela).
+
+`StatusMessage` recebe props simples (`status`, `count`, `search`, `onRetry`,
+`onClear`), não o objeto do query inteiro, para dar para montar as stories.
+
 Testes em `AnimeListPage.test.tsx`, com o MSW da Task 2 e um `QueryClient` novo por
 teste (`retry: false`):
 - mostra 12 cards da primeira página;
@@ -736,8 +902,11 @@ Status: TODO
 
 #### Step 1: Publicar
 Publicar na Vercel (o dono conecta o repositório; não criar conta nem fazer login em
-nome dele). Rodar o Lighthouse (mobile e desktop) na URL publicada e registrar
-Performance, Accessibility, Best Practices, LCP, CLS e INP no `DECISIONS.md`.
+nome dele). O `npm run build` já gera o app em `dist/` e o Storybook em
+`dist/storybook/`, então os dois saem no mesmo deploy: o app na raiz e o Storybook em
+`/storybook/`. Conferir que as duas URLs abrem. Rodar o Lighthouse (mobile e desktop)
+na URL do app e registrar Performance, Accessibility, Best Practices, LCP, CLS e INP no
+`DECISIONS.md`. Colocar os dois links no topo do `README.md`.
 
 #### Step 2: Revisar os documentos
 Use the writing skill. Confira o `README.md` seguindo os passos do zero em uma pasta

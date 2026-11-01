@@ -63,6 +63,11 @@ agents out of each other's way, and keep me informed.
 The brief is in `FRONTEND.md`. Read it before you plan. Stack: React (Next.js optional) and
 TypeScript, data from the AniList GraphQL API, layout from the Figma link in the brief.
 
+- Before you write code, read `docs/CONVENTIONS.md` (structure, types, tests, Storybook,
+  language) and the current plan named in `docs/plans/current.txt`.
+- Figma values (colors, fonts, sizes) are in `docs/figma/spec.md`. Read it instead of
+  calling the Figma MCP again.
+
 - Follow the Figma exactly. If something is missing or unclear, ask me.
 - Required: filter by format, search by text, and `averageScore` color on each card
   (below 50 red, 50 to 80 yellow, above 80 green).
