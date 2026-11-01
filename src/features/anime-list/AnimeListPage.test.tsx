@@ -1,8 +1,13 @@
-import { act, screen, waitFor } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { AnimePageVariables } from '../../api/anilist'
-import { animeFixtures } from '../../test/mocks/fixtures'
+import {
+  animeFixtures,
+  animeHighScore,
+  animeLowScore,
+  animeMidScore,
+} from '../../test/mocks/fixtures'
 import {
   captureVariables,
   respondNeverOnPage,
@@ -34,6 +39,19 @@ describe('AnimeListPage', () => {
     expect(screen.getByText('Carregando animes...')).toBeInTheDocument()
     expect(await screen.findByText('12 animes carregados')).toBeInTheDocument()
     expect(cardTitles()).toEqual(fixtureTitles(0, 12))
+
+    // A nota vai da resposta da AniList até a cor do selo: uma de cada faixa.
+    for (const [anime, tone] of [
+      [animeHighScore, 'high'],
+      [animeMidScore, 'mid'],
+      [animeLowScore, 'low'],
+    ] as const) {
+      const card = screen.getByRole('heading', { name: anime.title }).closest('article')
+      if (!card) throw new Error(`Card de ${anime.title} não encontrado`)
+      const badge = within(card).getByText(`${anime.averageScore}%`)
+      expect(badge).toHaveTextContent(`Nota média: ${anime.averageScore}%`)
+      expect(badge).toHaveAttribute('data-tone', tone)
+    }
   })
 
   it('filtra por formato: marca o botão, escreve na URL e mostra só aquele formato', async () => {
