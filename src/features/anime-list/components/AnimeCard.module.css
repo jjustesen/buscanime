@@ -19,7 +19,8 @@
   object-fit: cover;
 }
 
-/* Degradê do Figma sobre a capa, para o texto branco aparecer em qualquer imagem. */
+/* Degradê do Figma sobre a capa, para o texto branco aparecer em qualquer imagem. As
+   cores ficam escritas aqui porque não são variável do Figma e só existem aqui. */
 .card::after {
   content: '';
   position: absolute;

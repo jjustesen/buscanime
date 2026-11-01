@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { scoreTone } from './scoreTone'
 
 describe('scoreTone', () => {
-  // Os limites do enunciado: abaixo de 50, de 50 a 80 e acima de 80.
+  // Os dois lados de cada limite descrito no JSDoc de scoreTone.
   it.each([
     [0, 'low'],
     [49, 'low'],

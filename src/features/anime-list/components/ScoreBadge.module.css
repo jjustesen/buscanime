@@ -6,7 +6,7 @@
   color: var(--color-gray-light2);
 }
 
-/* Faixas de scoreTone: abaixo de 50, de 50 a 80, acima de 80. */
+/* Uma cor por faixa de scoreTone; os limites estão no JSDoc dele. */
 .badge[data-tone='low'] {
   background: var(--color-danger);
 }
