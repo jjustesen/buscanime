@@ -53,10 +53,23 @@ export const Error: Story = {
 
 /** Erro no "Ver mais": os cards ficam e o próprio "Ver mais" tenta de novo. */
 export const LoadMoreError: Story = {
-  args: { status: 'error', count: 12 },
+  args: { status: 'loadMoreError', count: 12 },
   play: async ({ canvas }) => {
     await expect(canvas.getByText(/Não foi possível carregar mais animes/)).toBeVisible()
     await expect(canvas.queryByRole('button')).not.toBeInTheDocument()
+  },
+}
+
+/** Falha ao atualizar uma lista que já está na tela: os cards ficam, e dá para tentar de novo. */
+export const RefreshError: Story = {
+  args: { status: 'refreshError', count: 24 },
+  play: async ({ args, canvas, userEvent }) => {
+    await expect(canvas.getByText('Não foi possível atualizar a lista.')).toBeVisible()
+    await expect(canvas.queryByText(/Ver mais/)).not.toBeInTheDocument()
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Tentar de novo' }))
+
+    await expect(args.onRetry).toHaveBeenCalledOnce()
   },
 }
 

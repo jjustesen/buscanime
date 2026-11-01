@@ -4,14 +4,16 @@ import styles from './StatusMessage.module.css'
 export interface StatusMessageProps {
   /**
    * Estado da lista. `pending`: carregando a primeira página ou trocando de filtro.
-   * `error`: o último pedido falhou. `success`: a lista na tela está atualizada.
+   * `error`: o pedido falhou e não há nenhum card na tela. `loadMoreError`: o "Ver mais"
+   * falhou; os cards ficam. `refreshError`: a atualização de uma lista que já está na
+   * tela falhou; os cards ficam. `success`: a lista na tela está atualizada.
    */
-  status: 'pending' | 'error' | 'success'
+  status: 'pending' | 'error' | 'loadMoreError' | 'refreshError' | 'success'
   /** Quantos animes estão na tela. */
   count: number
   /** Busca atual, para a mensagem de lista vazia. String vazia quando não há busca. */
   search: string
-  /** Pede a primeira página de novo, depois de um erro sem nenhum card na tela. */
+  /** Pede a lista de novo, depois de um erro sem cards ou de uma atualização que falhou. */
   onRetry: () => void
   /** Limpa a busca, quando ela não encontrou nada. */
   onClear: () => void
@@ -38,7 +40,7 @@ export function StatusMessage({ status, count, search, onRetry, onClear }: Statu
         </p>
       )}
 
-      {status === 'error' && count === 0 && (
+      {status === 'error' && (
         <>
           <p>Não foi possível carregar os animes.</p>
           <button type="button" className={styles.button} onClick={onRetry}>
@@ -49,8 +51,19 @@ export function StatusMessage({ status, count, search, onRetry, onClear }: Statu
 
       {/* Erro no "Ver mais": os cards ficam, e o próprio "Ver mais", logo abaixo, tenta
           de novo. Um segundo botão faria a mesma coisa. */}
-      {status === 'error' && count > 0 && (
+      {status === 'loadMoreError' && (
         <p>Não foi possível carregar mais animes. Clique em “Ver mais” para tentar de novo.</p>
+      )}
+
+      {/* A lista na tela continua valendo, só não foi atualizada: os cards ficam, e o
+          "Tentar de novo" pede a lista inteira de novo. */}
+      {status === 'refreshError' && (
+        <>
+          <p>Não foi possível atualizar a lista.</p>
+          <button type="button" className={styles.button} onClick={onRetry}>
+            Tentar de novo
+          </button>
+        </>
       )}
 
       {status === 'success' && count === 0 && (

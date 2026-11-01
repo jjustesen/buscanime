@@ -5,7 +5,7 @@ import { FormatFilter } from './components/FormatFilter'
 import { LoadMoreButton } from './components/LoadMoreButton'
 import { SearchBar } from './components/SearchBar'
 import { SkeletonGrid } from './components/SkeletonGrid'
-import { StatusMessage } from './components/StatusMessage'
+import { StatusMessage, type StatusMessageProps } from './components/StatusMessage'
 import { useAnimeList } from './hooks/useAnimeList'
 import { useListParams } from './hooks/useListParams'
 
@@ -28,6 +28,14 @@ export function AnimeListPage() {
   // anterior na tela, eles ficam esmaecidos até os novos chegarem.
   const pending = list.status === 'pending'
 
+  // Cada erro tem a sua mensagem: com cards na tela, dizer que "não deu para carregar os
+  // animes" seria falso, e falar do "Ver mais" só faz sentido se foi ele que falhou.
+  function messageStatus(): StatusMessageProps['status'] {
+    if (list.loadMoreFailed) return 'loadMoreError'
+    if (list.refreshFailed) return 'refreshError'
+    return list.status
+  }
+
   return (
     <div className={styles.page}>
       <FormatFilter value={params.format} onChange={(format) => setParams({ ...params, format })} />
@@ -42,7 +50,7 @@ export function AnimeListPage() {
       )}
 
       <StatusMessage
-        status={list.status}
+        status={messageStatus()}
         count={list.animes.length}
         search={params.search}
         onRetry={list.retry}

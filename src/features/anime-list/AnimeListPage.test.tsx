@@ -125,6 +125,30 @@ describe('AnimeListPage', () => {
     expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
   })
 
+  it('falha ao atualizar uma lista na tela mantém os cards e não fala do "Ver mais"', async () => {
+    // Cache vencido na hora: voltar a um filtro já visto pede a lista de novo.
+    const user = userEvent.setup()
+    renderWithClient(<AnimeListPage />, { staleTime: 0 })
+    await screen.findByText('12 animes carregados')
+    await user.click(screen.getByRole('button', { name: 'Ver mais' }))
+    await screen.findByText('24 animes carregados')
+    await user.click(screen.getByRole('button', { name: 'Movie' }))
+    await screen.findByText('5 animes carregados')
+    server.use(respondWithStatus(500))
+
+    await user.click(screen.getByRole('button', { name: 'All Formats' }))
+
+    expect(await screen.findByText('Não foi possível atualizar a lista.')).toBeInTheDocument()
+    expect(screen.queryByText(/Ver mais/)).not.toBeInTheDocument()
+    expect(cardTitles()).toEqual(fixtureTitles(0, 24))
+
+    server.resetHandlers()
+    await user.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
+    expect(screen.queryByText('Não foi possível atualizar a lista.')).not.toBeInTheDocument()
+  })
+
   it('lista vazia mostra a mensagem, e "Limpar busca" volta à lista', async () => {
     window.history.replaceState(null, '', '/?search=zzz')
     const user = userEvent.setup()
