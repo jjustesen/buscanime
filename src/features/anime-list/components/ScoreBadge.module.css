@@ -1,0 +1,20 @@
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 24px;
+  color: var(--color-gray-light2);
+}
+
+/* Faixas de scoreTone: abaixo de 50, de 50 a 80, acima de 80. */
+.badge[data-tone='low'] {
+  background: var(--color-danger);
+}
+
+.badge[data-tone='mid'] {
+  background: var(--color-warning);
+}
+
+.badge[data-tone='high'] {
+  background: var(--color-success);
+}
