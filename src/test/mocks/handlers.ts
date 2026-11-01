@@ -92,6 +92,16 @@ export function respondWithMedia(media: (AniListMedia | null)[]) {
   return anilist(() => HttpResponse.json(pageResponse(media)))
 }
 
+// Várias páginas escolhidas pelo teste: o pedido da página n recebe `pages[n - 1]`. Serve
+// para simular a AniList repetindo um anime entre páginas.
+export function respondWithPages(pages: Anime[][]) {
+  return anilist(({ page }) =>
+    HttpResponse.json(
+      pageResponse((pages[page - 1] ?? []).map(toAniListMedia), page, page < pages.length),
+    ),
+  )
+}
+
 // Falha de rede: o `fetch` rejeita sem resposta nenhuma.
 export function respondWithNetworkError() {
   return anilist(() => HttpResponse.error())

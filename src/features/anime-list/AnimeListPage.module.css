@@ -1,0 +1,9 @@
+/* Uma coluna centrada, com 24 px entre os blocos e 25 px nas laterais (docs/figma/spec.md).
+   Cada bloco define a própria largura máxima. */
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 25px;
+}
