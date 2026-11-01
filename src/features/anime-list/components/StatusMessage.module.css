@@ -1,0 +1,28 @@
+/* Estados fora do Figma: texto e botão centrados, com as fontes e cores do Figma. */
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  font-size: 16px;
+  text-align: center;
+  color: var(--color-primary);
+}
+
+/* Só texto escondido dentro: fora do fluxo, sem ocupar espaço nem somar um vão. */
+.status[data-screen-reader-only='true'] {
+  position: absolute;
+}
+
+/* Mesmo visual do botão "Buscar". */
+.button {
+  min-height: 38px;
+  padding: 0 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-white);
+  background: var(--color-primary);
+  cursor: pointer;
+}
