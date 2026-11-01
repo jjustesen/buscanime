@@ -1,9 +1,14 @@
 /* Medidas de docs/figma/spec.md (card de 317 × 270). A largura vem de quem usa o card. */
 .card {
   position: relative;
-  height: 270px;
+  /* O z-index de dentro do card não vaza para a página. */
+  isolation: isolate;
+  /* min-height: com zoom só de texto, o card cresce em vez de cortar. */
+  min-height: 270px;
   overflow: hidden;
   border-radius: var(--radius-md);
+  /* Fundo de quando a AniList não manda a cor da capa; a cor inline vence este. */
+  background: var(--color-gray-light2);
 }
 
 .cover {

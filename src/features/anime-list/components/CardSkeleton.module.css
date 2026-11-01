@@ -1,6 +1,6 @@
 /* Mesma altura e raio do card, para a grade não pular quando os dados chegam. */
 .skeleton {
-  height: 270px;
+  min-height: 270px;
   border-radius: var(--radius-md);
   background: var(--color-gray-light2);
 }
