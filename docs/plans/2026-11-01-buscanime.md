@@ -22,8 +22,10 @@ Lembretes das convenções que mais afetam este plano:
 - Exports nomeados. Comentários em português, código em inglês.
 
 A API é a AniList (GraphQL, `POST https://graphql.anilist.co`), sem autenticação e com
-CORS liberado. Ela limita a 30 pedidos por minuto e ignora argumentos nulos, então
-`format: null` significa "todos os formatos".
+CORS liberado. Ela limita a 30 pedidos por minuto. `search: null` é ignorado, mas
+`format: null` **não**: filtra animes sem formato definido. Para "todos os formatos",
+a chave `format` não é enviada. (Corrigido depois da Task 5; o plano original dizia
+que todo argumento nulo era ignorado.)
 
 O enunciado exige `AI_LOG.md` e `DECISIONS.md`. Atualize os dois ao fim de cada task,
 com o que foi decidido, verificado, corrigido ou rejeitado.
@@ -297,7 +299,12 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 2: Cliente da AniList (PR2)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução:** msw 3 usa `onUnhandledFrame`; `AniListError.status` é
+> um campo comum (`erasableSyntaxOnly`); a resposta é tipada pelo schema e convertida
+> uma vez, sem validação manual; `ANILIST_ENDPOINT`, `AnimePageVariables` e
+> `AniListMedia` são exportados para os mocks. Detalhes no `DECISIONS.md`.
 
 #### Files
 - Create: `src/features/anime-list/lib/formats.ts`, `src/features/anime-list/types.ts`
@@ -519,7 +526,13 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 3: Card do anime (PR3)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução:** sem `srcSet`/`sizes` (só a capa de 460 px; `cover.medium`
+> saiu do tipo e da query); capa que falha deixa de ser renderizada e fica a cor média;
+> `isolation: isolate` no card; `min-height` em vez de `height`; o `CardSkeleton` não
+> tem `aria-hidden` (quem esconde é a grade de esqueletos da Task 5); o axe ignora o
+> contraste só no selo da nota. Detalhes no `DECISIONS.md`.
 
 #### Files
 - Create: `src/features/anime-list/lib/scoreTone.ts`
@@ -647,7 +660,7 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 4: Estado na URL (PR4)
-Status: TODO
+Status: COMPLETED
 
 #### Files
 - Create: `src/features/anime-list/hooks/useListParams.ts`
@@ -717,7 +730,14 @@ git commit
 ---
 
 ### Task 5: Página com filtro, busca e "Ver mais" (PR4)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução:** o `useAnimeList` devolve um modelo pequeno (não o
+> objeto inteiro do TanStack); a chave do query é `['anime', 'list', params]`; o foco
+> depois do "Ver mais" é controlado pela página e preso aos filtros; o botão usa
+> `aria-disabled`; a barra de busca sincroniza com a URL durante o render (sem `key`);
+> `createQueryClient` e `shouldRetry` compartilhados entre app e testes. Detalhes no
+> `DECISIONS.md`.
 
 #### Files
 - Create: `src/features/anime-list/hooks/useAnimeList.ts`
@@ -840,7 +860,12 @@ O `role="list"` é proposital: o Safari com VoiceOver tira a semântica de lista
 `ul` com `list-style: none`. Cada `<li>`
 tem `tabIndex={-1}`. Num `useEffect` depois de os animes mudarem, se `focusIndex.current`
 não for nulo, foca o `<li>` desse índice e zera o ref. Os 4 primeiros cards recebem
-`priority="eager"` e o primeiro `"high"`.
+`priority="eager"` e o primeiro `"high"`. Cada `AnimeCard` usa `key={anime.id}`: o card
+guarda se a capa falhou e conta com isso para não reaproveitar o estado entre animes.
+
+`SkeletonGrid` (no mesmo arquivo da grade ou ao lado): 12 `CardSkeleton` dentro de um
+contêiner com `aria-hidden="true"`. O leitor de tela fica sabendo do carregamento pelo
+`StatusMessage`, não por 12 itens vazios.
 
 `LoadMoreButton`: 48 px, `--color-warning`, `--radius-md`, ícone `icon-add.svg` (24 px,
 `alt=""`) + "Ver mais" em 20 px SemiBold branco. Com `loading`, fica `disabled` e mostra

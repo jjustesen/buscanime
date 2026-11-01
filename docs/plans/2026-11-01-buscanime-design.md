@@ -120,10 +120,11 @@ App
 
 ## Desempenho
 
-- Imagens: `srcset` com `large` (230w) e `extraLarge` (460w), `sizes` pela coluna.
-  A primeira linha (4 cards) usa `loading="eager"` e o primeiro card
-  `fetchpriority="high"`. O resto usa `loading="lazy"`. O card tem altura fixa, então a
-  tela não pula.
+- Imagens: só a capa `extraLarge` (460 px), sem `srcset`. Nenhum card fica com menos
+  de 280 px, então a capa de 230 px nunca seria escolhida (decidido na revisão da
+  Task 3). A primeira linha (4 cards) usa `loading="eager"` e o primeiro card
+  `fetchpriority="high"`. O resto usa `loading="lazy"`. O card tem altura mínima
+  reservada, então a tela não pula.
 - Sem `memo` por padrão. Medir com o React Profiler depois de vários "Ver mais" e
   aplicar `React.memo` no `AnimeCard` só se aparecer custo.
 - Sem code splitting e sem virtualização: é uma tela só e a lista cresce por clique.

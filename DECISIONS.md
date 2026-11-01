@@ -28,6 +28,75 @@ e as regras de código em `docs/CONVENTIONS.md`.
 | Regras no lint               | Fronteiras de pasta, JSDoc em tipos e props, sem `export default`, sem `!` | Regra que o CI cobra não depende de memória. A correção automática do JSDoc fica desligada para não gerar comentário vazio. |
 | Formatação                   | Prettier checado no CI                                                     | Evita diffs de formatação entre os PRs empilhados.                                                                          |
 
+## Dados da AniList
+
+- **`api/` é dona dos tipos que a API usa** (`Format`, `AnimePageRequest`) e a
+  feature importa de lá. O `'ALL'` dos botões é da tela; o cliente recebe `null`.
+- **Uma conversão só, na fronteira.** A resposta é tipada como o schema da AniList
+  (com os campos que podem vir nulos) e convertida uma vez para `Anime`. Um corpo que
+  não é JSON vira erro com o status HTTP.
+- **Erros:** uma classe só (`AniListError`). Falha de rede, 429 e 5xx podem ser
+  tentados de novo; os outros não. Cancelar um pedido (trocar o filtro no meio) não
+  é erro.
+- **Título:** romaji, como no Figma. Se vier vazio ou nulo, usa o `userPreferred`.
+- **Mensagens de erro em português**, mas a tela mostra um texto fixo, não a
+  mensagem da API.
+- **msw 3:** a opção para recusar pedidos sem simulação agora se chama
+  `onUnhandledFrame`.
+- **Exportados só para os mocks:** `ANILIST_ENDPOINT`, `AnimePageVariables` e o tipo
+  cru `AniListMedia`. Assim os mocks usam o mesmo endereço e o mesmo formato do
+  cliente, e o typecheck pega uma mudança na query.
+
+## Card
+
+- **Uma capa só (460 px), sem `srcset`.** A AniList não redimensiona imagens; os
+  tamanhos que ela tem são 100, 230 e 460 px de largura. Nenhum card fica com menos
+  de 280 px, então a de 230 px nunca seria a escolhida pelo navegador.
+- **Prioridade da imagem por uma prop só** (`priority: 'high' | 'eager' | 'lazy'`):
+  a primeira linha carrega na hora, o primeiro card com prioridade alta (é o maior
+  elemento da primeira tela), o resto sob demanda. Uma prop evita combinações sem
+  sentido, como "lazy" com prioridade alta.
+- **Capa que falha some**, e fica a cor média da capa (`coverImage.color`) ou um cinza.
+  Sem isso, o Chrome desenha o ícone de imagem quebrada no canto do card.
+- **Degradê com cores literais** no CSS do card: não é variável do Figma e só existe
+  ali.
+- **Altura mínima de 270 px**, não fixa: com zoom só de texto, o conteúdo não é
+  cortado.
+
+## Página
+
+- **Busca no envio, não a cada tecla.** O Figma tem o botão "Buscar", e a AniList
+  limita a 30 pedidos por minuto. O texto digitado é estado local da barra; só vai
+  para a URL ao enviar (botão ou Enter).
+- **A barra de busca sincroniza com a URL durante o render**, sem `useEffect` e sem
+  remontar o campo (padrão da documentação do React para ajustar estado quando uma
+  prop muda). O plano previa remontar com `key`, mas isso tirava o foco do campo ao
+  apertar Enter.
+- **Botões de formato com `aria-pressed`**, não um grupo de rádio. O Figma mostra
+  botões; um grupo de rádio pede navegação por setas, mais código para pouco ganho.
+- **"Ver mais":**
+  - O botão continua focável enquanto carrega (`aria-disabled`, não `disabled`).
+    Com `disabled`, o navegador joga o foco para o início da página.
+  - Depois de carregar, o foco vai para o primeiro card novo. O foco só é movido se
+    o filtro ainda for o mesmo de quando o botão foi clicado.
+  - Se falhar, os cards ficam e o próprio botão serve para tentar de novo.
+- **Erros diferentes, mensagens diferentes:** erro sem cards mostra a mensagem com
+  "Tentar de novo"; erro ao carregar mais fala do "Ver mais"; erro ao atualizar uma
+  lista que já está na tela mantém os cards e diz que não deu para atualizar.
+- **Repetidos removidos pelo `id`:** com a ordem "em alta", um anime pode mudar de
+  página entre um pedido e outro.
+- **Ao trocar de filtro, os cards antigos ficam esmaecidos** (`aria-busy`) até os
+  novos chegarem, em vez de piscar o esqueleto.
+- **Leitor de tela:** uma região `aria-live` anuncia carregando, vazio, erro e
+  "N animes de <formato> carregados". O contexto no texto garante que trocar entre
+  duas listas de 12 itens também seja anunciado.
+- **Exceções do axe:** além do selo da nota, o contraste fica desligado nas stories
+  do "Ver mais" (branco sobre amarelo do Figma, ~1,7:1) e da grade esmaecida
+  (conteúdo antigo com opacidade 0,5, marcado como `aria-busy`).
+- **Uma configuração do TanStack Query** (`createQueryClient`) para o app e para os
+  testes, que só desligam as novas tentativas. A regra de nova tentativa
+  (`shouldRetry`) tem teste próprio.
+
 ## Estado
 
 - **Filtro e busca na URL.** Recarregar mantém o filtro, o link pode ser
@@ -52,8 +121,12 @@ e as regras de código em `docs/CONVENTIONS.md`.
   | Texto de exemplo da busca `#A7B0BE`   | ~2,2:1    | 4,5:1     |
 
   Mantive as cores porque o enunciado manda reproduzir o Figma. A correção sugerida é
-  usar texto escuro sobre amarelo e verde, sem mexer nos fundos. Nas stories, só a
-  regra `color-contrast` do axe fica desligada, e só nesses componentes.
+  usar texto escuro sobre amarelo e verde, sem mexer nos fundos. Nas stories, a regra
+  `color-contrast` do axe fica desligada só para o selo da nota. No card, ela continua
+  valendo para as etiquetas de gênero, com a opção `ignorePseudo`: sem ela, o degradê
+  do card (um `::after`) deixava o axe sem conseguir medir nenhum texto, e as
+  etiquetas nunca eram checadas de verdade. O título sobre a capa continua sem
+  checagem automática, porque o axe não mede texto sobre imagem.
 
 - **Ordem padrão "em alta" (`TRENDING_DESC`)**, porque os animes do Figma são os que
   estavam em alta quando o design foi feito. Com busca, a ordem é por relevância
@@ -79,3 +152,5 @@ e as regras de código em `docs/CONVENTIONS.md`.
 - graphql-codegen para gerar os tipos a partir do schema da AniList.
 - Testes E2E com Playwright no deploy de preview.
 - Lighthouse CI em cada PR.
+- Respeitar o `Retry-After` da AniList no erro 429. Hoje a nova tentativa usa o
+  intervalo padrão (1 s e 2 s), que provavelmente bate no mesmo limite.

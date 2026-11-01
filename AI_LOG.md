@@ -54,8 +54,9 @@ atualizado ao fim de cada etapa.
   recomendação e mantive o Figma, porque o enunciado manda reproduzi-lo; o problema
   ficou registrado no `DECISIONS.md`.
 - **API testada antes de planejar.** A IA rodou a query real na AniList com `curl`.
-  Isso confirmou que filtros nulos são ignorados e revelou o limite atual de **30
-  pedidos por minuto** (a documentação fala em 90). O plano passou a incluir cache de
+  Isso revelou o limite atual de **30 pedidos por minuto** (a documentação fala em
+  90). A IA também concluiu que filtros nulos são ignorados, o que estava errado para
+  o formato (ver a seção das Tasks 4 e 5). O plano passou a incluir cache de
   5 minutos e nova tentativa no erro 429.
 - **Repetidos no "Ver mais".** A IA notou que, com a ordem "em alta", a lista muda
   entre páginas e o mesmo anime pode voltar. O plano remove repetidos pelo `id`.
@@ -104,3 +105,118 @@ atualizado ao fim de cada etapa.
 - **Histórico:** um commit intermediário de correção (`8fc64b5`) não passa no
   typecheck sozinho, porque a remoção de um arquivo entrou um commit antes da hora. O
   commit seguinte corrige. Deixei como está em vez de reescrever o histórico.
+- **O primeiro CI falhou no GitHub**, e não localmente: o `package-lock.json` gerado
+  no Windows (npm 11.6) não tinha dois pacotes que o `npm ci` do Linux exige
+  (`@emnapi/core` e `@emnapi/runtime`). Regenerei o lockfile com o npm 11.21 e
+  conferi com `npm ci --dry-run` nas duas versões antes de reenviar.
+
+### Task 2: cliente da AniList
+
+- **Teste antes do código.** O subagente escreveu os 16 testes do cliente contra uma
+  função vazia, viu os 16 falharem pelo motivo esperado e só então implementou.
+- **A API foi conferida de novo** com uma chamada real, para os mocks (MSW)
+  devolverem exatamente o formato da AniList. Os testes passam pela conversão de
+  verdade, sem mockar o `fetch`.
+- **Nome de opção conferido no código da biblioteca.** O subagente usou
+  `onUnhandledFrame` no msw, e não o `onUnhandledRequest` que eu conhecia. O revisor
+  confirmou no código do msw 3 instalado que a opção mudou de nome e que um pedido
+  sem simulação é recusado, em vez de sair para a internet.
+- **O que a revisão de qualidade pegou, e foi corrigido:**
+  - **Validação pela metade.** A resposta da API era checada por fora, depois
+    convertida com um `as unknown as` e checada de novo por dentro. Três camadas para
+    o mesmo problema, difíceis de explicar. Ficou um tipo que copia o schema da
+    AniList (com o que ele permite ser nulo) e uma conversão só, na fronteira.
+  - **Um teste não protegia a decisão que dizia proteger:** o teste do título
+    reserva usava `null`, mas a decisão era sobre o romaji vazio (`''`). Agora testa
+    os dois casos.
+  - **Um comentário estava errado:** dizia que um pedido sem simulação falha o teste,
+    mas o cliente trata a recusa como falha de rede. O comentário foi corrigido, e o
+    erro original passou a ser guardado (`cause`) para facilitar a depuração.
+  - **Resposta que não é JSON** (uma página de erro de proxy) não tinha teste. Agora
+    tem.
+  - Os mocks passaram a usar o tipo da resposta da AniList, para que renomear um
+    campo da query quebre o typecheck em vez de passar em silêncio.
+- **O que não segui:** nada da revisão foi rejeitado nesta task.
+
+### Task 3: card do anime
+
+- **O CI do PR2 quebrou pelo mesmo motivo do PR1** (lockfile do npm 11.6). Na segunda
+  vez, a correção virou regra nas convenções: dependências se instalam com
+  `npx npm@11.21.1` e se confere com `npm ci --dry-run` antes de enviar.
+- **Um erro da própria IA.** Ao ler o log do CI, o agente principal escreveu um
+  `grep` com crases entre aspas duplas. O shell executou o que estava entre as crases,
+  um `npm ci` local, que apagou parte do `node_modules` e travou num arquivo preso
+  por um `vite preview` esquecido por um subagente. Nada foi enviado. Encerrei o
+  servidor, a IA reinstalou e conferiu que nada faltava, e a regra "nunca use crases
+  dentro de aspas duplas" entrou nas convenções.
+- **Medição contra o Figma.** O subagente mediu o card no Storybook gerado: 317 × 270,
+  conteúdo a 28/23 px, etiquetas e selo nas posições do Figma.
+- **O que a revisão de qualidade pegou, e foi corrigido:**
+  - **`srcset` que não fazia nada.** O plano (escrito pela IA) previa duas capas
+    (230 e 460 px). A revisão calculou que nenhum card fica com menos de 280 px, então
+    o navegador sempre escolheria a de 460 px, e o `sizes` ainda estava errado para a
+    grade fluida. Ficou uma capa só, e a de 230 px saiu da query.
+  - **Um teste que falharia por acaso.** A story da capa quebrada procurava a imagem
+    depois de ela já poder ter sumido. Agora espera a imagem sair da tela, sem
+    depender do tempo de rede.
+  - **Capa quebrada mais simples:** em vez de estado + atributo + regra de CSS, a
+    imagem que falha deixa de ser renderizada.
+  - **`z-index` vazando** para fora do card (atrapalharia um filtro fixo no topo).
+    Resolvido com `isolation: isolate`.
+  - **Acessibilidade:** altura mínima no card (zoom de texto não corta), e o
+    `aria-hidden` dos esqueletos foi para a grade, onde de fato esconde a lista.
+  - **O axe estava desligado no card inteiro** para o contraste. Agora ignora só o
+    selo da nota e continua checando as etiquetas de gênero, que estão no limite
+    (4,55:1).
+- **O que não segui:** nada da revisão foi rejeitado nesta task.
+- **Um teste que não testava nada, achado na correção.** Ao restringir a exceção do
+  axe ao selo da nota, o subagente descobriu que as etiquetas de gênero nunca tinham
+  sido checadas: o degradê do card (um `::after`) deixava o axe sem conseguir medir o
+  texto, e ele marcava tudo como "incompleto", o que não falha o teste. Ele provou
+  com uma etiqueta de cor ruim de propósito (a story passava) e corrigiu com a opção
+  `ignorePseudo`. Agora a etiqueta ruim faz 8 de 9 stories falharem.
+
+### Tasks 4 e 5: estado na URL e página
+
+- **Testes que provam que pegam o erro.** Nas duas tasks, os subagentes quebraram o
+  código de propósito (tirar a proteção contra entrada repetida no histórico, tirar o
+  `focus()` depois do "Ver mais", tirar a sincronia da busca) e confirmaram que os
+  testes falham. Num desses casos, o próprio subagente descobriu que um teste de foco
+  passava mesmo com o foco errado, e corrigiu o teste.
+- **Uma afirmação da IA checada e rejeitada.** O subagente da Task 5 disse que só 1
+  de 24 animes "em alta" tinha nota na API real, o que contrariaria o Figma (nota em
+  todo card). Antes de levar isso a mim como decisão, o agente principal consultou a
+  API: 11 de 12 animes da primeira página têm nota. A ordem "em alta" foi mantida.
+  (Depois se viu que o subagente estava certo sobre a página; ver o último item.)
+- **Mudança de plano justificada:** o plano previa remontar a barra de busca com
+  `key`; o subagente viu no navegador que isso tirava o foco do campo ao apertar
+  Enter, e usou o padrão do React de ajustar o estado durante o render.
+- **A revisão de aderência ao plano achou uma lacuna:** nenhum teste da página
+  conferia a cor da nota de ponta a ponta, um dos três requisitos do enunciado.
+  Entrou um teste com notas baixa, média e alta vindas da API simulada.
+- **A revisão de qualidade achou três bugs reais, reproduzidos com testes:**
+  - **Foco no lugar errado:** trocar de filtro enquanto o "Ver mais" carregava podia
+    jogar o foco para um card de outra lista. O foco agora é controlado só pela
+    página e só se move se o filtro ainda for o mesmo.
+  - **Foco perdido no "Ver mais":** com `disabled`, o navegador tirava o foco do
+    botão enquanto carregava; se o pedido falhasse, o foco ia para o início da
+    página. Isso não aparece no jsdom, só no navegador de verdade, então o teste
+    roda numa story no Chromium.
+  - **Mensagem de erro errada:** falhar ao atualizar uma lista já carregada mostrava
+    "Clique em Ver mais", sem o botão na tela.
+  - Também: o hook passou a devolver só o que a página usa (antes repassava o objeto
+    inteiro do TanStack, o que re-renderizava a página à toa), e o app e os testes
+    passaram a usar a mesma configuração do TanStack Query.
+- **O que não segui:** a revisão sugeriu trocar os botões de formato por um grupo de
+  rádio. Mantive os botões, porque é o que o Figma mostra, e registrei no
+  `DECISIONS.md`.
+- **Um bug que só apareceu com a API real.** Ao abrir a página no navegador, nenhum
+  card tinha nota. O agente principal comparou pedidos direto na AniList e achou a
+  causa: `format: null` não é ignorado, como a IA tinha concluído no começo; ele
+  filtra animes sem formato definido (anúncios que ainda não estrearam, sem nota).
+  Os testes não pegavam porque o mock tratava `null` como "todos". A correção: a
+  chave `format` só é enviada quando há filtro, o teste do pedido passou a exigir
+  isso (falhou antes da correção) e o mock passou a imitar a AniList de verdade.
+  Isso também explica a afirmação "só 1 de 24 tem nota" do subagente da Task 5, que
+  eu tinha rejeitado: ele olhou a página, eu olhei a API sem o `format: null`. Os dois
+  viram coisas reais, e só comparar os pedidos mostrou a diferença.
