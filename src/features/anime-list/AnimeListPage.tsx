@@ -18,39 +18,38 @@ export function AnimeListPage() {
 
   async function loadMore() {
     focusIndexRef.current = list.animes.length
-    const result = await list.fetchNextPage()
-    // Se falhou, a lista não cresceu: esquece o foco, senão ele pularia para um card na
-    // próxima vez que a lista mudasse (numa troca de filtro, por exemplo).
-    if (result.isError) focusIndexRef.current = null
+    const loaded = await list.loadMore()
+    // Se falhou ou nem pediu, a lista não cresceu: esquece o foco, senão ele pularia para
+    // um card na próxima vez que a lista mudasse (numa troca de filtro, por exemplo).
+    if (!loaded) focusIndexRef.current = null
   }
+
+  // Sem nada na tela, a lista nova carrega com esqueletos; com os cards do filtro
+  // anterior na tela, eles ficam esmaecidos até os novos chegarem.
+  const pending = list.status === 'pending'
 
   return (
     <div className={styles.page}>
       <FormatFilter value={params.format} onChange={(format) => setParams({ ...params, format })} />
       <SearchBar value={params.search} onSearch={(search) => setParams({ ...params, search })} />
 
-      {list.isPending ? (
+      {pending && list.animes.length === 0 ? (
         <SkeletonGrid />
       ) : (
         list.animes.length > 0 && (
-          <AnimeGrid
-            animes={list.animes}
-            busy={list.isPlaceholderData}
-            focusIndexRef={focusIndexRef}
-          />
+          <AnimeGrid animes={list.animes} busy={pending} focusIndexRef={focusIndexRef} />
         )
       )}
 
       <StatusMessage
-        // Com os cards do filtro anterior na tela, a lista nova ainda está carregando.
-        status={list.isPlaceholderData ? 'pending' : list.status}
+        status={list.status}
         count={list.animes.length}
         search={params.search}
-        onRetry={() => list.refetch()}
+        onRetry={list.retry}
         onClear={() => setParams({ ...params, search: '' })}
       />
 
-      {list.hasNextPage && <LoadMoreButton loading={list.isFetchingNextPage} onClick={loadMore} />}
+      {list.hasNextPage && <LoadMoreButton loading={list.isLoadingMore} onClick={loadMore} />}
     </div>
   )
 }
