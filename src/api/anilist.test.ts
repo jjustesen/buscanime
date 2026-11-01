@@ -1,7 +1,7 @@
-import { delay, http } from 'msw'
 import { describe, expect, it } from 'vitest'
 import {
   captureVariables,
+  respondNever,
   respondWithEmptyList,
   respondWithGraphQLErrors,
   respondWithMedia,
@@ -9,7 +9,7 @@ import {
   respondWithStatus,
 } from '../test/mocks/handlers'
 import { server } from '../test/mocks/server'
-import { ANILIST_ENDPOINT, AniListError, fetchAnimePage, type AnimePageVariables } from './anilist'
+import { AniListError, fetchAnimePage, type AnimePageVariables } from './anilist'
 import type { AnimePageRequest } from './types'
 
 const firstPage: AnimePageRequest = { page: 1, format: null, search: '' }
@@ -20,16 +20,6 @@ async function sentVariables(request: AnimePageRequest): Promise<AnimePageVariab
   server.use(captureVariables((variables) => (sent = variables)))
   await fetchAnimePage(request)
   return sent
-}
-
-// Devolve o erro de uma promessa que precisa falhar.
-async function rejectionOf(promise: Promise<unknown>): Promise<unknown> {
-  try {
-    await promise
-  } catch (error) {
-    return error
-  }
-  throw new Error('a promessa deveria ter falhado')
 }
 
 describe('fetchAnimePage: o pedido', () => {
@@ -91,12 +81,13 @@ describe('fetchAnimePage: a resposta', () => {
     ])
   })
 
-  it('usa o título userPreferred quando o romaji vem vazio', async () => {
+  // `||` e não `??` no cliente: string vazia também conta como "sem romaji".
+  it.each([null, ''])('usa o título userPreferred quando o romaji vem %j', async (romaji) => {
     server.use(
       respondWithMedia([
         {
           id: 1,
-          title: { romaji: null, userPreferred: 'Frieren' },
+          title: { romaji, userPreferred: 'Frieren' },
           coverImage: { large: 'a.jpg', extraLarge: 'b.jpg', color: null },
           genres: [],
           averageScore: null,
@@ -130,14 +121,12 @@ describe('fetchAnimePage: a resposta', () => {
     ])
   })
 
-  it('pagina de 12 em 12 e avisa quando acabou', async () => {
+  it('devolve a página e o hasNextPage que a AniList informou', async () => {
     const first = await fetchAnimePage(firstPage)
     const second = await fetchAnimePage({ ...firstPage, page: 2 })
 
     expect(first).toMatchObject({ page: 1, hasNextPage: true })
-    expect(first.items).toHaveLength(12)
     expect(second).toMatchObject({ page: 2, hasNextPage: false })
-    expect(second.items).toHaveLength(12)
   })
 
   it('devolve uma página vazia quando nada foi encontrado', async () => {
@@ -155,7 +144,7 @@ describe('fetchAnimePage: os erros', () => {
     async (status) => {
       server.use(respondWithStatus(status))
 
-      const error = await rejectionOf(fetchAnimePage(firstPage))
+      const error = await fetchAnimePage(firstPage).catch((e: unknown) => e)
 
       expect(error).toBeInstanceOf(AniListError)
       expect(error).toMatchObject({ status, retryable: true })
@@ -165,7 +154,7 @@ describe('fetchAnimePage: os erros', () => {
   it('status 400 vira um AniListError que não adianta repetir', async () => {
     server.use(respondWithStatus(400))
 
-    const error = await rejectionOf(fetchAnimePage(firstPage))
+    const error = await fetchAnimePage(firstPage).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(AniListError)
     expect(error).toMatchObject({ status: 400, retryable: false })
@@ -174,7 +163,7 @@ describe('fetchAnimePage: os erros', () => {
   it('erro do GraphQL com status 200 e sem data vira AniListError com a mensagem', async () => {
     server.use(respondWithGraphQLErrors('Invalid format'))
 
-    const error = await rejectionOf(fetchAnimePage(firstPage))
+    const error = await fetchAnimePage(firstPage).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(AniListError)
     expect(error).toMatchObject({ message: 'Invalid format', status: 200, retryable: false })
@@ -183,18 +172,27 @@ describe('fetchAnimePage: os erros', () => {
   it('falha de rede vira um AniListError sem status, que vale tentar de novo', async () => {
     server.use(respondWithNetworkError())
 
-    const error = await rejectionOf(fetchAnimePage(firstPage))
+    const error = await fetchAnimePage(firstPage).catch((e: unknown) => e)
 
     expect(error).toBeInstanceOf(AniListError)
     expect(error).toMatchObject({ status: undefined, retryable: true })
   })
 
+  it('corpo de erro que não é JSON vira AniListError pelo status', async () => {
+    server.use(respondWithStatus(502, '<html>Bad Gateway</html>'))
+
+    const error = await fetchAnimePage(firstPage).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(AniListError)
+    expect(error).toMatchObject({ status: 502, retryable: true })
+  })
+
   it('pedido cancelado repassa o erro de cancelamento, sem virar AniListError', async () => {
     // A resposta nunca chega; o teste cancela o pedido no meio.
-    server.use(http.post(ANILIST_ENDPOINT, () => delay('infinite')))
+    server.use(respondNever())
     const controller = new AbortController()
 
-    const pending = rejectionOf(fetchAnimePage(firstPage, controller.signal))
+    const pending = fetchAnimePage(firstPage, controller.signal).catch((e: unknown) => e)
     controller.abort()
     const error = await pending
 

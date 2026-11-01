@@ -1,10 +1,10 @@
-import { http, HttpResponse, type PathParams } from 'msw'
-import { ANILIST_ENDPOINT, type AnimePageVariables } from '../../api/anilist'
+import { delay, http, HttpResponse, type PathParams } from 'msw'
+import { ANILIST_ENDPOINT, type AniListMedia, type AnimePageVariables } from '../../api/anilist'
 import type { Anime } from '../../api/types'
 import { animeFixtures } from './fixtures'
 
 /** Corpo do `POST` que o `fetchAnimePage` manda à AniList. */
-export interface AnimePageRequestBody {
+interface AnimePageRequestBody {
   /** Texto da query GraphQL. O mock não lê; só existe uma query no app. */
   query: string
   /** Variáveis da query: página, busca, formato e ordem. */
@@ -12,12 +12,12 @@ export interface AnimePageRequestBody {
 }
 
 // Monta a resposta no formato da AniList, para o teste passar pela conversão de verdade.
-export function pageResponse(media: unknown[], currentPage = 1, hasNextPage = false) {
+function pageResponse(media: (AniListMedia | null)[], currentPage = 1, hasNextPage = false) {
   return { data: { Page: { pageInfo: { currentPage, hasNextPage }, media } } }
 }
 
 // O caminho inverso do `toAnime` de anilist.ts: de `Anime` para o formato cru da API.
-function toAniListMedia(anime: Anime) {
+function toAniListMedia(anime: Anime): AniListMedia {
   return {
     id: anime.id,
     title: { romaji: anime.title, userPreferred: anime.title },
@@ -68,10 +68,16 @@ export function captureVariables(onRequest: (variables: AnimePageVariables) => v
   })
 }
 
-// Erro HTTP (429, 500, 400...) com o corpo de erro que a AniList usa.
-export function respondWithStatus(status: number) {
+// Erro HTTP (429, 500, 400...). Sem `body`, usa o corpo de erro que a AniList manda;
+// com `body`, responde esse texto cru (a página HTML de um proxy, por exemplo).
+export function respondWithStatus(status: number, body?: string) {
   return anilist(() =>
-    HttpResponse.json({ data: null, errors: [{ message: `HTTP ${status}`, status }] }, { status }),
+    body === undefined
+      ? HttpResponse.json(
+          { data: null, errors: [{ message: `HTTP ${status}`, status }] },
+          { status },
+        )
+      : new HttpResponse(body, { status, headers: { 'Content-Type': 'text/html' } }),
   )
 }
 
@@ -86,11 +92,17 @@ export function respondWithEmptyList() {
 }
 
 // Uma página com animes crus escolhidos pelo teste (campos nulos, gêneros demais...).
-export function respondWithMedia(media: unknown[]) {
+export function respondWithMedia(media: (AniListMedia | null)[]) {
   return anilist(() => HttpResponse.json(pageResponse(media)))
 }
 
 // Falha de rede: o `fetch` rejeita sem resposta nenhuma.
 export function respondWithNetworkError() {
   return anilist(() => HttpResponse.error())
+}
+
+// A resposta nunca chega: serve para o teste cancelar o pedido no meio. Não passa pelo
+// `anilist` porque não lê o corpo nem devolve `Response`.
+export function respondNever() {
+  return http.post(ANILIST_ENDPOINT, () => delay('infinite'))
 }

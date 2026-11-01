@@ -26,12 +26,32 @@ type MediaSort = 'TRENDING_DESC' | 'SEARCH_MATCH'
 // Tipos crus da resposta. Seguem o schema da AniList, onde quase todo campo pode vir
 // nulo. Ficam aqui dentro: o formato da API não sai de api/.
 
+/** Corpo da resposta da AniList, com sucesso ou com erro. */
+interface AniListResponse {
+  /** Dados pedidos. Falta ou vem `null` quando o pedido falhou. */
+  data?: AniListData | null
+  /** Erros do GraphQL. Pode vir junto com status HTTP de erro ou com 200. */
+  errors?: AniListGraphQLError[]
+}
+
+/** O `data` da resposta. */
+interface AniListData {
+  /** A página pedida. `null` quando a query falhou. */
+  Page: AniListPage | null
+}
+
+/** Um erro do GraphQL. */
+interface AniListGraphQLError {
+  /** Explicação do erro, em inglês, escrita pela AniList. */
+  message: string
+}
+
 /** O `data.Page` da resposta. */
 interface AniListPage {
   /** Dados de paginação. */
-  pageInfo: AniListPageInfo
-  /** Animes da página. O GraphQL permite item nulo na lista. */
-  media: (AniListMedia | null)[]
+  pageInfo: AniListPageInfo | null
+  /** Animes da página. O GraphQL permite a lista nula e item nulo na lista. */
+  media: (AniListMedia | null)[] | null
 }
 
 /** Paginação da AniList. */
@@ -42,8 +62,10 @@ interface AniListPageInfo {
   hasNextPage: boolean | null
 }
 
+// Exportado só para os mocks do MSW: assim, renomear um campo da query quebra o `tsc`
+// também no mock. O resto do app usa `Anime`.
 /** Um anime como a AniList devolve. */
-interface AniListMedia {
+export interface AniListMedia {
   /** ID da AniList; o único campo que o schema garante não nulo. */
   id: number
   /** Títulos em mais de uma língua. */
@@ -74,18 +96,21 @@ interface AniListCoverImage {
   color: string | null
 }
 
-// Erro que a tela mostra. `retryable` diz ao TanStack Query se vale repetir o pedido.
+/** Falha de um pedido à AniList: erro HTTP, erro do GraphQL ou falha de rede. */
 export class AniListError extends Error {
-  // Status HTTP. `undefined` quando o pedido nem teve resposta (falha de rede).
+  /** Status HTTP. `undefined` quando o pedido nem teve resposta (falha de rede). */
   readonly status?: number
 
-  constructor(message: string, status?: number) {
-    super(message)
+  constructor(message: string, status?: number, options?: ErrorOptions) {
+    super(message, options)
     this.name = 'AniListError'
     this.status = status
   }
 
-  // Repetir só ajuda se o problema for passageiro: rede, limite de pedidos ou servidor.
+  /**
+   * Se vale repetir o pedido; o TanStack Query lê isto. Só ajuda se o problema for
+   * passageiro: rede, limite de pedidos (429) ou servidor (5xx).
+   */
   get retryable(): boolean {
     return this.status === undefined || this.status === 429 || this.status >= 500
   }
@@ -114,50 +139,29 @@ export async function fetchAnimePage(
       signal,
     })
   } catch (error) {
-    // Cancelado de propósito (o filtro mudou): não é erro de tela, repassa como veio.
+    // Cancelado de propósito (o filtro mudou): cancelar não é falha, repassa como veio.
     if (signal?.aborted) throw error
-    throw new AniListError('Não foi possível falar com a AniList.')
+    throw new AniListError('Não foi possível falar com a AniList.', undefined, { cause: error })
   }
 
-  const body: unknown = await response.json().catch((error: unknown) => {
-    if (signal?.aborted) throw error
-    // Corpo que não é JSON (a página de erro de um proxy, por exemplo).
-    return null
-  })
+  // Fronteira da API: o único `as` do cliente. Os tipos acima seguem a nulidade do
+  // schema, então o resto do código trata cada campo que pode faltar. Corpo que não é
+  // JSON (a página de erro de um proxy, por exemplo) vira `null`.
+  const body = (await response.json().catch(() => null)) as AniListResponse | null
 
-  const page = readPage(body)
-  if (!response.ok || page === null) {
-    const message = readErrorMessage(body) ?? `A AniList respondeu com status ${response.status}.`
-    throw new AniListError(message, response.status)
+  const page = body?.data?.Page
+  if (!response.ok || !page) {
+    throw new AniListError(
+      body?.errors?.[0]?.message ?? `A AniList respondeu com status ${response.status}.`,
+      response.status,
+    )
   }
 
   return {
-    items: page.media.filter((media) => media !== null).map(toAnime),
-    page: page.pageInfo.currentPage ?? request.page,
-    hasNextPage: page.pageInfo.hasNextPage === true,
+    items: (page.media ?? []).filter((media) => media !== null).map(toAnime),
+    page: page.pageInfo?.currentPage ?? request.page,
+    hasNextPage: page.pageInfo?.hasNextPage === true,
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
-}
-
-// Confere a estrutura de fora (`data.Page` com `pageInfo` e `media`) e devolve `null`
-// se ela não estiver lá, como numa resposta de erro.
-function readPage(body: unknown): AniListPage | null {
-  const data = isRecord(body) ? body.data : null
-  const page = isRecord(data) ? data.Page : null
-  if (!isRecord(page) || !isRecord(page.pageInfo) || !Array.isArray(page.media)) return null
-  // Fronteira da API: a estrutura foi conferida acima; os campos de cada anime podem vir
-  // nulos e o `toAnime` trata cada um.
-  return page as unknown as AniListPage
-}
-
-// A AniList explica o erro em `errors[0].message`, com status HTTP ou sem.
-function readErrorMessage(body: unknown): string | null {
-  const errors = isRecord(body) ? body.errors : null
-  const first: unknown = Array.isArray(errors) ? errors[0] : null
-  return isRecord(first) && typeof first.message === 'string' ? first.message : null
 }
 
 function toAnime(media: AniListMedia): Anime {
@@ -172,6 +176,6 @@ function toAnime(media: AniListMedia): Anime {
       color: media.coverImage?.color ?? null,
     },
     genres: (media.genres ?? []).slice(0, 3),
-    averageScore: media.averageScore ?? null,
+    averageScore: media.averageScore,
   }
 }
