@@ -14,7 +14,6 @@ export const ANIME_PAGE_QUERY = `
           userPreferred
         }
         coverImage {
-          large
           extraLarge
           color
         }

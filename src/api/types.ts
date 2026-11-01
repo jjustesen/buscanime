@@ -17,7 +17,7 @@ export interface Anime {
   id: number
   /** Título em romaji, como no Figma. Cai para `userPreferred` se vier vazio. */
   title: string
-  /** Capa do anime em dois tamanhos, para o `srcset`. */
+  /** Capa do anime e a cor média dela. */
   cover: AnimeCover
   /** Até 3 gêneros, na ordem da AniList. Pode ser vazio. */
   genres: string[]
@@ -25,11 +25,15 @@ export interface Anime {
   averageScore: number | null
 }
 
-/** Imagens da capa. A AniList não redimensiona, então usamos os tamanhos que ela tem. */
+/**
+ * Capa do anime. A AniList não redimensiona e todo card da grade tem pelo menos 280 px,
+ * então só a maior capa serve.
+ */
 export interface AnimeCover {
-  /** URL da capa com 230 px de largura (`coverImage.large` na API). */
-  medium: string
-  /** URL da capa com 460 px de largura (`coverImage.extraLarge` na API). */
+  /**
+   * URL da capa com 460 px de largura (`coverImage.extraLarge` na API), a maior que a
+   * AniList tem.
+   */
   large: string
   /** Cor média da capa em hex, usada como fundo enquanto a imagem carrega. Pode faltar. */
   color: string | null

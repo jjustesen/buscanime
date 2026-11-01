@@ -31,8 +31,6 @@ export function AnimeCard({ anime, priority = 'lazy' }: AnimeCardProps) {
           className={styles.cover}
           alt=""
           src={anime.cover.large}
-          srcSet={`${anime.cover.medium} 230w, ${anime.cover.large} 460w`}
-          sizes="(max-width: 700px) 100vw, 317px"
           loading={priority === 'lazy' ? 'lazy' : 'eager'}
           fetchPriority={priority === 'high' ? 'high' : 'auto'}
           decoding="async"
