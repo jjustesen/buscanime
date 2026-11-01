@@ -37,13 +37,14 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: { anime: animeHighScore },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('heading', { name: 'Hoshi no Kaze' })).toBeVisible()
+    await expect(canvas.getByRole('heading', { name: animeHighScore.title })).toBeVisible()
     const list = within(canvas.getByRole('list', { name: 'Gêneros' }))
-    await expect(list.getAllByRole('listitem')).toHaveLength(3)
-    for (const genre of animeHighScore.genres) {
-      await expect(list.getByText(genre)).toBeVisible()
-    }
-    await expect(canvas.getByText('87%')).toHaveAttribute('data-tone', 'high')
+    await expect(list.getAllByRole('listitem').map((li) => li.textContent)).toEqual(
+      animeHighScore.genres,
+    )
+    // A cor da faixa é testada no scoreTone e nas stories do ScoreBadge; aqui, só o selo.
+    const score = `${animeHighScore.averageScore}%`
+    await expect(canvas.getByText(score)).toHaveTextContent(`Nota média: ${score}`)
   },
 }
 
@@ -51,7 +52,8 @@ export const Default: Story = {
 export const MidScore: Story = {
   args: { anime: animeMidScore },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('80%')).toHaveAttribute('data-tone', 'mid')
+    const score = `${animeMidScore.averageScore}%`
+    await expect(canvas.getByText(score)).toHaveTextContent(`Nota média: ${score}`)
   },
 }
 
@@ -113,6 +115,15 @@ export const Lazy: Story = {
   play: async ({ canvas }) => {
     const cover = canvas.getByRole('presentation')
     await expect(cover).toHaveAttribute('loading', 'lazy')
-    await expect(cover).toHaveAttribute('fetchpriority', 'auto')
+  },
+}
+
+/** Card da primeira dobra que não é o LCP: baixa já, sem prioridade extra. */
+export const Eager: Story = {
+  args: { anime: animeHighScore, priority: 'eager' },
+  play: async ({ canvas }) => {
+    const cover = canvas.getByRole('presentation')
+    await expect(cover).toHaveAttribute('loading', 'eager')
+    await expect(cover).not.toHaveAttribute('fetchpriority', 'high')
   },
 }
