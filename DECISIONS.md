@@ -129,23 +129,28 @@ e as regras de código em `docs/CONVENTIONS.md`.
 
 - **Vercel**, a partir do `main`. O mesmo build gera o app (`/`) e o Storybook
   (`/storybook/`).
-- **Lighthouse na versão publicada** (Lighthouse 12, Chromium sem interface, antes
-  do ícone da aba e do `preconnect`):
+- **Lighthouse na versão publicada** (Lighthouse 12, Chromium sem interface), antes e
+  depois do ícone da aba e do `preconnect`. Mobile depois: mediana de 3 execuções.
 
-  | Perfil  | Desempenho | Acessibilidade | Boas práticas | SEO | LCP   | CLS   | TBT  |
-  | ------- | ---------- | -------------- | ------------- | --- | ----- | ----- | ---- |
-  | Mobile  | 87         | 96             | 96            | 100 | 4,0 s | 0,001 | 0 ms |
-  | Desktop | 91         | 96             | 96            | 100 | 2,0 s | 0     | 0 ms |
+  | Perfil          | Desempenho | Acessibilidade | Boas práticas | SEO | LCP   | CLS   | TBT  |
+  | --------------- | ---------- | -------------- | ------------- | --- | ----- | ----- | ---- |
+  | Mobile, antes   | 87         | 96             | 96            | 100 | 4,0 s | 0,001 | 0 ms |
+  | Mobile, depois  | 87         | 96             | 100           | 100 | 4,1 s | 0,001 | 0 ms |
+  | Desktop, antes  | 91         | 96             | 96            | 100 | 2,0 s | 0     | 0 ms |
+  | Desktop, depois | 87         | 96             | 100           | 100 | 2,4 s | 0     | 0 ms |
   - **Acessibilidade 96:** a única falha é o contraste do "Ver mais" (branco sobre o
     amarelo do Figma), mantido por decisão (ver "Fidelidade ao Figma").
-  - **Boas práticas 96:** um 404 no console, do ícone da aba que não existia. Já
-    corrigido.
-  - **LCP de 4 s no celular:** o maior elemento é a capa do primeiro card, e ela só é
-    descoberta depois da resposta da API. Quase metade do tempo (1,7 s) era a espera
-    até a capa começar a baixar. O `index.html` agora abre a conexão com a API e com
-    o servidor das capas (`preconnect`) enquanto o JavaScript carrega. Resolver de
-    vez pede a primeira página pronta no HTML (renderização no servidor ou no build),
-    que é justamente o ganho do Next.js que troquei por simplicidade.
+  - **Boas práticas 96 → 100:** era um 404 no console, do ícone da aba que não
+    existia.
+  - **LCP de ~4 s no celular:** o maior elemento é a capa do primeiro card, e ela só
+    é descoberta depois da resposta da API. Quase metade do tempo (1,7 s) era a
+    espera até a capa começar a baixar. O `preconnect` para a API e para o servidor
+    das capas **não mudou o LCP de forma mensurável** (4,0–4,1 s nas três execuções),
+    e a diferença no desktop está dentro da variação entre execuções. Deixei o
+    `preconnect` porque não custa nada, mas o gargalo é a ordem: HTML, JavaScript,
+    API e só então a capa. Resolver pede a primeira página pronta no HTML
+    (renderização no servidor ou no build), que é justamente o ganho do Next.js que
+    troquei por simplicidade.
 
 ## Estado
 

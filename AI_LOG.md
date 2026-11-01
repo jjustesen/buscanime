@@ -277,3 +277,7 @@ atualizado ao fim de cada etapa.
 - **Um problema de conta, resolvido por mim:** o primeiro repositório foi criado pela
   IA na conta errada do GitHub (a que estava ativa no `gh`). Apaguei e pedi para
   recriar na conta certa. A lição: confirmar a conta antes de qualquer ação que publica.
+- **Medição depois da correção, com o resultado que deu.** Depois de publicar o ícone
+  e o `preconnect`, a IA rodou o Lighthouse de novo (3 vezes no mobile). O ícone
+  levou "boas práticas" a 100; o `preconnect` não mudou o LCP. O `DECISIONS.md`
+  registra as duas coisas, em vez de só a que deu certo.
