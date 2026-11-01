@@ -1,0 +1,23 @@
+/* Medidas de docs/figma/spec.md: 4 colunas (317 px cada em 1366 px de tela), 21 px entre
+   linhas e 16 px entre colunas. A largura é máxima, não fixa. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 21px 16px;
+  width: 100%;
+  max-width: var(--content-width);
+  /* O reset da lista fica aqui, não no CSS global (docs/CONVENTIONS.md, seção 8). */
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cards do filtro anterior, enquanto os novos não chegam. */
+.grid[aria-busy='true'] {
+  opacity: 0.5;
+}
+
+/* O contorno do foco segue o canto arredondado do card. */
+.item {
+  border-radius: var(--radius-md);
+}
