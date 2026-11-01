@@ -95,9 +95,17 @@ src/
 └── main.tsx, App.tsx
 ```
 
-Os componentes de apresentação são testados pelas stories (`*.stories.tsx`), que
-rodam como testes no Chromium com o axe. Funções, hooks, o cliente da API e a página
-inteira são testados com Vitest (`*.test.ts(x)`).
+### Onde estão os testes
+
+| O quê                                                                          | Arquivo                                      | Onde roda                     |
+| ------------------------------------------------------------------------------ | -------------------------------------------- | ----------------------------- |
+| Componentes (card, selo, filtros, busca, grade, "Ver mais", mensagens, layout) | `*.stories.tsx`, função `play` de cada story | Vitest no Chromium, com o axe |
+| Funções puras, hooks e o cliente da AniList                                    | `*.test.ts`                                  | Vitest no jsdom               |
+| A página inteira, com a API simulada (MSW)                                     | `AnimeListPage.test.tsx`                     | Vitest no jsdom               |
+
+Os componentes não têm `*.test.tsx` próprio: o teste deles é a story, que roda como
+teste no `npm test` e no CI. Assim cada estado é escrito uma vez e serve de
+documentação e de teste. O porquê está em `DECISIONS.md`.
 
 ## Uso de IA
 

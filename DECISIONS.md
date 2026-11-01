@@ -16,6 +16,29 @@ e as regras de código em `docs/CONVENTIONS.md`.
 | Testes       | Vitest + Testing Library + MSW               | Testam o comportamento, sem depender da internet.                                                                                                | —                                                                                 |
 | Componentes  | Storybook 10 + `addon-vitest` + `addon-a11y` | Cada estado visível e testado: renderização, interação e acessibilidade (axe). Publicado junto com o app.                                        | CI 1 a 2 minutos mais lento (instala o Chromium).                                 |
 
+### Testes de componente são as stories
+
+Os componentes de apresentação não têm `*.test.tsx` próprio. O teste deles é a
+story: cada `*.stories.tsx` tem uma função `play` que renderiza o componente e
+verifica o comportamento com as mesmas ferramentas da Testing Library
+(`getByRole`, `userEvent`, `expect`). O `@storybook/addon-vitest` transforma cada
+story em um teste do Vitest, que roda no `npm test` e no CI, com o axe checando
+acessibilidade em cada uma.
+
+- **Por que assim:** cada estado do componente é escrito uma vez e serve para duas
+  coisas, a documentação visual (o Storybook publicado) e o teste. Com `*.test.tsx`
+  separados, o mesmo comportamento seria testado em dois lugares.
+- **Por que no Chromium e não no jsdom:** o navegador real pegou dois problemas que o
+  jsdom esconde: o foco que sumia do "Ver mais" com `disabled` e o ícone de imagem
+  quebrada no card.
+- **O custo:** o `npm run test:unit` (rápido, jsdom) não roda as stories; para elas é
+  o `npm test`. Funções puras, hooks, o cliente da API e a página inteira (com a API
+  simulada) continuam em `*.test.ts(x)`.
+- **Alternativa considerada:** rodar as mesmas stories também no jsdom com
+  `composeStories`, gerando arquivos `*.test.tsx` sem reescrever testes. Não fiz:
+  é uma camada a mais para explicar, e os testes de foco teriam de ser pulados no
+  jsdom.
+
 ## Ferramentas e versões
 
 | O quê                        | Escolha                                                                    | Por quê                                                                                                                     |
@@ -113,8 +136,32 @@ e as regras de código em `docs/CONVENTIONS.md`.
     bem menor.
   - Um celular fraco é ~4 vezes mais lento, o que pode passar de 16 ms. Mesmo assim,
     o que importa para o clique é o INP (bom até 200 ms), muito acima disso.
-  - O custo cresce com o número de cards na tela.
-  - Se o Lighthouse mobile apontar INP ruim, o `memo` no card é o primeiro passo.
+- **Medição com muitos cards (build de produção).** Para conferir as ressalvas acima,
+  medi o tempo do clique em "Ver mais" até a tela atualizar (Event Timing do
+  Chromium, a base do INP) com 48 a 960 cards na tela, CPU normal e 4 vezes mais
+  lenta (como o Lighthouse simula um celular), com e sem `memo` no card. Página
+  temporária com os dados falsos dos testes, sem rede; mediana de 3 rodadas de 5
+  cliques.
+
+  | Cards na tela | CPU normal | CPU 4× | CPU 4×, com `memo` |
+  | ------------- | ---------- | ------ | ------------------ |
+  | 48            | 24 ms      | 40 ms  | 40 ms              |
+  | 120           | 24 ms      | 48 ms  | 40 ms              |
+  | 240           | 24 ms      | 64 ms  | 48 ms              |
+  | 480           | 24 ms      | 104 ms | 88 ms              |
+  | 960           | 32 ms      | 216 ms | 160 ms             |
+  - Com a CPU normal, 24 ms é o piso da medição (próximo quadro e arredondamento do
+    Chromium), não custo dos cards.
+  - De 120 a 240 cards (10 a 20 cliques em "Ver mais"), o pior caso é 64 ms num
+    celular lento, um terço do limite. O `memo` economiza 8 a 16 ms ali: não vale.
+  - Com 960 cards no celular lento, o clique passa de 200 ms. O `memo` corta a parte
+    do React (de 61 para 13 ms), mas o clique ainda leva 160 ms, porque o resto é o
+    navegador calculando o layout e desenhando quase mil cards. Isso só a
+    virtualização (desenhar só os cards visíveis) resolveria.
+  - **Decisão: sem `memo` e sem virtualização.** Se um dia a lista crescer a esse
+    ponto, a ordem é `memo` no card, depois medir `content-visibility: auto` nos
+    itens, e só então virtualizar.
+
 - **Leitor de tela:** uma região `aria-live` anuncia carregando, vazio, erro e
   "N animes de <formato> carregados". O contexto no texto garante que trocar entre
   duas listas de 12 itens também seja anunciado.
@@ -220,8 +267,6 @@ e as regras de código em `docs/CONVENTIONS.md`.
   intervalo padrão (1 s e 2 s), que provavelmente bate no mesmo limite.
 - Pré-renderizar a primeira página no build ou no servidor, para o LCP do celular
   não depender da resposta da API.
-- Medir o "Ver mais" com a CPU limitada (como um celular) e decidir de novo sobre o
-  `React.memo` no card.
 - Corrigir o contraste do Figma (texto escuro sobre amarelo e verde), se o design
   permitir.
 - Uma story para cada largura de tela (filtros quebrados, uma coluna), para o axe e
