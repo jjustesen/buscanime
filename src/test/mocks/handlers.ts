@@ -112,3 +112,15 @@ export function respondWithNetworkError() {
 export function respondNever() {
   return http.post(ANILIST_ENDPOINT, () => delay('infinite'))
 }
+
+// A página `page` nunca responde; as outras respondem como o padrão, mas sempre dizendo que
+// há uma próxima página. Serve para deixar o "Ver mais" pendurado em qualquer filtro, mesmo
+// num formato que nas fixtures cabe numa página só.
+export function respondNeverOnPage(page: number) {
+  return anilist(async (variables) => {
+    if (variables.page === page) await delay('infinite')
+    const body = fixturePage(variables)
+    body.data.Page.pageInfo.hasNextPage = true
+    return HttpResponse.json(body)
+  })
+}

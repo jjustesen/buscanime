@@ -8,7 +8,7 @@ const firstPage = animeFixtures.slice(0, 12).map((fixture) => fixture.anime)
 
 const meta = {
   component: AnimeGrid,
-  args: { animes: firstPage, busy: false, focusIndexRef: { current: null } },
+  args: { animes: firstPage, busy: false },
   parameters: {
     a11y: {
       // As mesmas exceções das stories do AnimeCard, pelos mesmos motivos (DECISIONS.md):

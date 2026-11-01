@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { AnimePageVariables } from '../../api/anilist'
 import { animeFixtures } from '../../test/mocks/fixtures'
-import { captureVariables, respondWithPages, respondWithStatus } from '../../test/mocks/handlers'
+import {
+  captureVariables,
+  respondNeverOnPage,
+  respondWithPages,
+  respondWithStatus,
+} from '../../test/mocks/handlers'
 import { server } from '../../test/mocks/server'
 import { renderWithClient } from '../../test/renderWithClient'
 import { AnimeListPage } from './AnimeListPage'
@@ -89,6 +94,26 @@ describe('AnimeListPage', () => {
     const thirteenth = screen.getByRole('heading', { name: animeFixtures[12].anime.title })
     await waitFor(() => expect(thirteenth.closest('li')).toHaveFocus())
     expect(screen.queryByRole('button', { name: 'Ver mais' })).not.toBeInTheDocument()
+  })
+
+  it('"Ver mais" de um filtro não move o foco depois que o usuário troca de filtro', async () => {
+    const user = userEvent.setup()
+    renderWithClient(<AnimeListPage />)
+    await screen.findByText('12 animes carregados')
+    await user.click(screen.getByRole('button', { name: 'Ver mais' }))
+    await screen.findByText('24 animes carregados')
+    // Daqui em diante, a página 2 de qualquer filtro fica sem resposta.
+    server.use(respondNeverOnPage(2))
+    await user.click(screen.getByRole('button', { name: 'TV Show' }))
+    await screen.findByText('10 animes carregados')
+    await user.click(screen.getByRole('button', { name: 'Ver mais' }))
+    await screen.findByRole('button', { name: 'Carregando...' })
+
+    // Volta para All Formats, que está no cache com 24 cards, antes da página 2 de TV chegar.
+    await user.click(screen.getByRole('button', { name: 'All Formats' }))
+
+    expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'All Formats' })).toHaveFocus()
   })
 
   it('não repete um anime que a AniList devolve de novo na página seguinte', async () => {
