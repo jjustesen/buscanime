@@ -14,8 +14,8 @@ export interface AnimePageVariables {
   perPage: number
   /** Texto buscado, sem espaços nas pontas, ou `null` para não buscar. */
   search: string | null
-  /** Formato filtrado, ou `null` para todos. */
-  format: Format | null
+  /** Formato filtrado. Fica de fora para todos: `format: null` filtra "sem formato". */
+  format?: Format
   /** Ordem: em alta sem busca, relevância com busca. */
   sort: MediaSort[]
 }
@@ -130,11 +130,13 @@ export async function fetchAnimePage(
   const variables: AnimePageVariables = {
     page: request.page,
     perPage: PAGE_SIZE,
-    // A AniList ignora argumento nulo, então `null` quer dizer "sem busca".
+    // `search: null` a AniList ignora: quer dizer "sem busca".
     search: search || null,
-    format: request.format,
     sort: search ? ['SEARCH_MATCH'] : ['TRENDING_DESC'],
   }
+  // O formato só vai quando existe. Diferente da busca, `format: null` na AniList não é
+  // ignorado: devolve só animes sem formato definido (anúncios, ainda sem nota).
+  if (request.format) variables.format = request.format
 
   let response: Response
   try {

@@ -1,5 +1,5 @@
-// Uma página de animes. A AniList ignora argumento nulo, então `search: null` e
-// `format: null` significam "sem filtro". `isAdult: false` tira o conteúdo adulto.
+// Uma página de animes. `search: null` significa "sem busca"; o formato, quando não
+// há filtro, nem é enviado (ver fetchAnimePage). `isAdult: false` tira o conteúdo adulto.
 export const ANIME_PAGE_QUERY = `
   query AnimePage($page: Int, $perPage: Int, $search: String, $format: MediaFormat, $sort: [MediaSort]) {
     Page(page: $page, perPage: $perPage) {

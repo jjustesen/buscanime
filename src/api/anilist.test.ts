@@ -26,11 +26,12 @@ describe('fetchAnimePage: o pedido', () => {
   it('sem busca, pede os animes em alta, sem filtro de formato nem de texto', async () => {
     const sent = await sentVariables(firstPage)
 
+    // Sem a chave `format`: na AniList, `format: null` não é "todos os formatos", é
+    // "só animes sem formato" (anúncios que ainda não estrearam, sem nota).
     expect(sent).toEqual({
       page: 1,
       perPage: 12,
       search: null,
-      format: null,
       sort: ['TRENDING_DESC'],
     })
   })

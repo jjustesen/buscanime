@@ -28,12 +28,13 @@ function toAniListMedia(anime: Anime): AniListMedia {
 }
 
 // Filtra as fixtures como a AniList faria: formato exato e busca no título, sem
-// diferenciar maiúsculas. Depois corta a página pedida.
+// diferenciar maiúsculas. Depois corta a página pedida. Sem a chave `format`, vale
+// qualquer formato; `format: null` só casa com "sem formato", que nenhuma fixture tem.
 function fixturePage({ page, perPage, format, search }: AnimePageVariables) {
   const term = search?.toLowerCase()
   const matches = animeFixtures.filter(
     (fixture) =>
-      (format === null || fixture.format === format) &&
+      (format === undefined || fixture.format === format) &&
       (!term || fixture.anime.title.toLowerCase().includes(term)),
   )
   const start = (page - 1) * perPage
