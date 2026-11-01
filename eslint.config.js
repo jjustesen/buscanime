@@ -10,7 +10,8 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default defineConfig([
-  globalIgnores(['dist', 'storybook-static', 'coverage', 'agent-kit']),
+  // Saídas de build (dist, storybook-static) e o kit de agentes, que não é código do app.
+  globalIgnores(['dist', 'storybook-static', 'agent-kit']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -34,20 +35,49 @@ export default defineConfig([
     rules: {
       'no-restricted-imports': [
         'error',
-        { patterns: ['react', '**/features/**', '**/components/**'] },
+        {
+          patterns: [
+            {
+              group: ['react', 'react-dom', '**/features/**', '**/components/**'],
+              message:
+                'docs/CONVENTIONS.md §1: api/ só fala com a AniList e converte os dados; não importa React, features/ nem components/.',
+            },
+          ],
+        },
       ],
     },
   },
   {
     files: ['src/components/**'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: ['**/features/**', '**/api/**'] }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/features/**', '**/api/**'],
+              message:
+                'docs/CONVENTIONS.md §1: components/ recebe tudo por props; não importa features/ nem api/.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
     files: ['src/**/lib/**'],
     rules: {
-      'no-restricted-imports': ['error', { patterns: ['react', 'react-dom'] }],
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react-dom'],
+              message: 'docs/CONVENTIONS.md §1: lib/ só tem funções puras, sem React.',
+            },
+          ],
+        },
+      ],
     },
   },
 
@@ -60,7 +90,8 @@ export default defineConfig([
       'jsdoc/require-jsdoc': [
         'error',
         {
-          publicOnly: false,
+          // Sem fixer: o --fix inseriria um /** */ vazio, que passa na regra sem explicar nada.
+          enableFixer: false,
           // Funções não entram: a regra cobra tipos e props, não cada função auxiliar.
           require: { FunctionDeclaration: false },
           contexts: ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration', 'TSPropertySignature'],

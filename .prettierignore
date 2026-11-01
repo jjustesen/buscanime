@@ -1,0 +1,10 @@
+# Documentação e arquivos dos agentes: escritos à mão, fora do código do app.
+docs/
+.agents/
+.claude/
+agent-kit/
+
+# Saídas de build e arquivo gerado pelo npm.
+dist/
+storybook-static/
+package-lock.json
