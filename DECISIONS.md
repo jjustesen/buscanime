@@ -125,6 +125,28 @@ e as regras de código em `docs/CONVENTIONS.md`.
   testes, que só desligam as novas tentativas. A regra de nova tentativa
   (`shouldRetry`) tem teste próprio.
 
+## Publicação e Lighthouse
+
+- **Vercel**, a partir do `main`. O mesmo build gera o app (`/`) e o Storybook
+  (`/storybook/`).
+- **Lighthouse na versão publicada** (Lighthouse 12, Chromium sem interface, antes
+  do ícone da aba e do `preconnect`):
+
+  | Perfil  | Desempenho | Acessibilidade | Boas práticas | SEO | LCP   | CLS   | TBT  |
+  | ------- | ---------- | -------------- | ------------- | --- | ----- | ----- | ---- |
+  | Mobile  | 87         | 96             | 96            | 100 | 4,0 s | 0,001 | 0 ms |
+  | Desktop | 91         | 96             | 96            | 100 | 2,0 s | 0     | 0 ms |
+  - **Acessibilidade 96:** a única falha é o contraste do "Ver mais" (branco sobre o
+    amarelo do Figma), mantido por decisão (ver "Fidelidade ao Figma").
+  - **Boas práticas 96:** um 404 no console, do ícone da aba que não existia. Já
+    corrigido.
+  - **LCP de 4 s no celular:** o maior elemento é a capa do primeiro card, e ela só é
+    descoberta depois da resposta da API. Quase metade do tempo (1,7 s) era a espera
+    até a capa começar a baixar. O `index.html` agora abre a conexão com a API e com
+    o servidor das capas (`preconnect`) enquanto o JavaScript carrega. Resolver de
+    vez pede a primeira página pronta no HTML (renderização no servidor ou no build),
+    que é justamente o ganho do Next.js que troquei por simplicidade.
+
 ## Estado
 
 - **Filtro e busca na URL.** Recarregar mantém o filtro, o link pode ser
@@ -167,6 +189,15 @@ e as regras de código em `docs/CONVENTIONS.md`.
   caixa alta feita por CSS (o leitor de tela não soletra) e listas com `role="list"`.
 - **Axe em todas as stories:** uma violação de acessibilidade falha o teste.
 - **Convenções escritas e checadas pelo lint** (`docs/CONVENTIONS.md`).
+- **Storybook publicado** com todos os estados que o Figma não mostra.
+- **Estado na URL**, com o botão voltar funcionando.
+- **Layout do celular ao desktop**, sem rolagem lateral até 320 px.
+- **Foco e leitor de tela:** o foco vai para o primeiro card novo depois do "Ver
+  mais", e uma região `aria-live` anuncia carregando, vazio, erro e a contagem.
+- **Erros tratados por tipo**, com nova tentativa automática para falha de rede, 429
+  e 5xx.
+- **CI no GitHub Actions:** lint, Prettier, typecheck, testes (jsdom e Chromium),
+  build e limite de tamanho do JavaScript (100 kB gzip; hoje ~82 kB).
 
 ## Fora do escopo
 
@@ -182,3 +213,11 @@ e as regras de código em `docs/CONVENTIONS.md`.
 - Lighthouse CI em cada PR.
 - Respeitar o `Retry-After` da AniList no erro 429. Hoje a nova tentativa usa o
   intervalo padrão (1 s e 2 s), que provavelmente bate no mesmo limite.
+- Pré-renderizar a primeira página no build ou no servidor, para o LCP do celular
+  não depender da resposta da API.
+- Medir o "Ver mais" com a CPU limitada (como um celular) e decidir de novo sobre o
+  `React.memo` no card.
+- Corrigir o contraste do Figma (texto escuro sobre amarelo e verde), se o design
+  permitir.
+- Uma story para cada largura de tela (filtros quebrados, uma coluna), para o axe e
+  a revisão verem os estados responsivos.

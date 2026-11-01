@@ -983,7 +983,7 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 7: Documentação e publicação (PR6)
-Status: TODO
+Status: COMPLETED
 
 #### Files
 - Modify: `README.md` (o que é, como rodar, como testar, link publicado)

@@ -4,6 +4,23 @@ Este arquivo registra como a IA foi usada neste projeto: as ferramentas, como o
 trabalho foi organizado e o que foi verificado, corrigido ou rejeitado. Ele é
 atualizado ao fim de cada etapa.
 
+## Resumo
+
+- **Eu decidi; a IA propôs, executou e revisou.** Escolhi a base (Vite, CSS
+  Modules), exigi JSDoc em todo tipo e Storybook para os componentes, decidi manter
+  as cores do Figma e quando mesclar e publicar. A IA propôs alternativas com
+  trade-offs, escreveu o plano e o código, e revisou o próprio trabalho.
+- **Cada task passou por três agentes:** um implementa e dois revisam sem ter visto o
+  código ser escrito (aderência ao plano e qualidade). As revisões acharam bugs reais
+  nas Tasks 3, 4 e 5, cada um reproduzido por um teste que falhava antes da correção.
+- **A IA errou, e os erros estão registrados:** uma premissa errada sobre a API
+  (`format: null`), um `srcset` inútil no plano, um comando de shell que apagou o
+  `node_modules`, testes que não testavam o que diziam. Todos foram pegos por
+  revisão, teste ou conferência no navegador.
+- **O que mais pegou erro:** abrir a página no navegador com a API real. O bug que
+  escondia as notas passava em todos os testes, porque o mock repetia a premissa
+  errada.
+
 ## Ferramentas
 
 - **Claude Code** (app desktop), com o modelo Claude Opus, como agente principal.
@@ -244,3 +261,19 @@ atualizado ao fim de cada etapa.
 - **Processo:** como a task mudou só CSS (2 commits), juntei as revisões de aderência
   ao plano e de qualidade numa só.
 - **O que não segui:** nada da revisão foi rejeitado nesta task.
+
+### Task 7: publicação e documentação
+
+- **Mesclagem e publicação.** Com o meu OK, os PRs 1 a 5 entraram no `main` com
+  commits de merge (sem squash), para o histórico real ficar visível. Eu conectei o
+  repositório na Vercel; a IA não cria conta nem faz login.
+- **Lighthouse na versão publicada**, rodado pela IA com o Chromium do Playwright. Os
+  números e o que tirou pontos estão no `DECISIONS.md`. A partir deles, a IA achou
+  duas correções baratas: o ícone da aba (um 404 no console) e o `preconnect` para a
+  API e para o servidor das capas (o LCP no celular esperava 1,7 s até a capa
+  começar a baixar).
+- **Conferência manual:** app e Storybook publicados abertos no navegador, com dados
+  reais.
+- **Um problema de conta, resolvido por mim:** o primeiro repositório foi criado pela
+  IA na conta errada do GitHub (a que estava ativa no `gh`). Apaguei e pedi para
+  recriar na conta certa. A lição: confirmar a conta antes de qualquer ação que publica.
