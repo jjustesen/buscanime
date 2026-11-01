@@ -161,6 +161,12 @@ export interface Anime {
   `npm run lint && npm run format:check && npm run typecheck && npm test && npm run build && npm run size`
   (skill `verify`).
 - Dependência entra no PR que a usa pela primeira vez, não antes.
+- Instale e atualize dependências com `npx npm@11.21.1 install ...`, não com o npm
+  desta máquina (11.6). O npm 11.6 no Windows grava um `package-lock.json` sem
+  `@emnapi/core` e `@emnapi/runtime`, e o `npm ci` do CI (Linux) recusa o lockfile.
+  Antes de enviar, confira com `npm ci --dry-run`.
+- Nunca use crases dentro de aspas duplas num comando de shell: o shell executa o que
+  está entre elas.
 - Ao fim de cada task, atualizar o `AI_LOG.md` (o que a IA gerou, o que foi
   verificado, corrigido ou rejeitado) e o `DECISIONS.md` quando houver decisão.
 - Divergência com o Figma ou com o enunciado: parar e perguntar ao dono.

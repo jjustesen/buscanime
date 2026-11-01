@@ -28,6 +28,25 @@ e as regras de código em `docs/CONVENTIONS.md`.
 | Regras no lint               | Fronteiras de pasta, JSDoc em tipos e props, sem `export default`, sem `!` | Regra que o CI cobra não depende de memória. A correção automática do JSDoc fica desligada para não gerar comentário vazio. |
 | Formatação                   | Prettier checado no CI                                                     | Evita diffs de formatação entre os PRs empilhados.                                                                          |
 
+## Dados da AniList
+
+- **`api/` é dona dos tipos que a API usa** (`Format`, `AnimePageRequest`) e a
+  feature importa de lá. O `'ALL'` dos botões é da tela; o cliente recebe `null`.
+- **Uma conversão só, na fronteira.** A resposta é tipada como o schema da AniList
+  (com os campos que podem vir nulos) e convertida uma vez para `Anime`. Um corpo que
+  não é JSON vira erro com o status HTTP.
+- **Erros:** uma classe só (`AniListError`). Falha de rede, 429 e 5xx podem ser
+  tentados de novo; os outros não. Cancelar um pedido (trocar o filtro no meio) não
+  é erro.
+- **Título:** romaji, como no Figma. Se vier vazio ou nulo, usa o `userPreferred`.
+- **Mensagens de erro em português**, mas a tela mostra um texto fixo, não a
+  mensagem da API.
+- **msw 3:** a opção para recusar pedidos sem simulação agora se chama
+  `onUnhandledFrame`.
+- **Exportados só para os mocks:** `ANILIST_ENDPOINT`, `AnimePageVariables` e o tipo
+  cru `AniListMedia`. Assim os mocks usam o mesmo endereço e o mesmo formato do
+  cliente, e o typecheck pega uma mudança na query.
+
 ## Estado
 
 - **Filtro e busca na URL.** Recarregar mantém o filtro, o link pode ser
