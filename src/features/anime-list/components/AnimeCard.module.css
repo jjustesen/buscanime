@@ -1,0 +1,69 @@
+/* Medidas de docs/figma/spec.md (card de 317 × 270). A largura vem de quem usa o card. */
+.card {
+  position: relative;
+  height: 270px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+.cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Degradê do Figma sobre a capa, para o texto branco aparecer em qualquer imagem. */
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.17) 105%);
+}
+
+/* Título e gêneros ficam acima do degradê. */
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 23px 28px 0;
+}
+
+.title {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-white);
+}
+
+/* O reset da lista fica aqui, não no CSS global (docs/CONVENTIONS.md, seção 8). */
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-gray-light2);
+  background: var(--color-primary-light1);
+}
+
+.score {
+  position: absolute;
+  z-index: 1;
+  right: 8px;
+  bottom: 11px;
+}
