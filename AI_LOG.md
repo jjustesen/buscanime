@@ -104,3 +104,35 @@ atualizado ao fim de cada etapa.
 - **Histórico:** um commit intermediário de correção (`8fc64b5`) não passa no
   typecheck sozinho, porque a remoção de um arquivo entrou um commit antes da hora. O
   commit seguinte corrige. Deixei como está em vez de reescrever o histórico.
+- **O primeiro CI falhou no GitHub**, e não localmente: o `package-lock.json` gerado
+  no Windows (npm 11.6) não tinha dois pacotes que o `npm ci` do Linux exige
+  (`@emnapi/core` e `@emnapi/runtime`). Regenerei o lockfile com o npm 11.21 e
+  conferi com `npm ci --dry-run` nas duas versões antes de reenviar.
+
+### Task 2: cliente da AniList
+
+- **Teste antes do código.** O subagente escreveu os 16 testes do cliente contra uma
+  função vazia, viu os 16 falharem pelo motivo esperado e só então implementou.
+- **A API foi conferida de novo** com uma chamada real, para os mocks (MSW)
+  devolverem exatamente o formato da AniList. Os testes passam pela conversão de
+  verdade, sem mockar o `fetch`.
+- **Nome de opção conferido no código da biblioteca.** O subagente usou
+  `onUnhandledFrame` no msw, e não o `onUnhandledRequest` que eu conhecia. O revisor
+  confirmou no código do msw 3 instalado que a opção mudou de nome e que um pedido
+  sem simulação é recusado, em vez de sair para a internet.
+- **O que a revisão de qualidade pegou, e foi corrigido:**
+  - **Validação pela metade.** A resposta da API era checada por fora, depois
+    convertida com um `as unknown as` e checada de novo por dentro. Três camadas para
+    o mesmo problema, difíceis de explicar. Ficou um tipo que copia o schema da
+    AniList (com o que ele permite ser nulo) e uma conversão só, na fronteira.
+  - **Um teste não protegia a decisão que dizia proteger:** o teste do título
+    reserva usava `null`, mas a decisão era sobre o romaji vazio (`''`). Agora testa
+    os dois casos.
+  - **Um comentário estava errado:** dizia que um pedido sem simulação falha o teste,
+    mas o cliente trata a recusa como falha de rede. O comentário foi corrigido, e o
+    erro original passou a ser guardado (`cause`) para facilitar a depuração.
+  - **Resposta que não é JSON** (uma página de erro de proxy) não tinha teste. Agora
+    tem.
+  - Os mocks passaram a usar o tipo da resposta da AniList, para que renomear um
+    campo da query quebre o typecheck em vez de passar em silêncio.
+- **O que não segui:** nada da revisão foi rejeitado nesta task.

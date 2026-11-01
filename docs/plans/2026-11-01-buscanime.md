@@ -297,7 +297,12 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 2: Cliente da AniList (PR2)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução:** msw 3 usa `onUnhandledFrame`; `AniListError.status` é
+> um campo comum (`erasableSyntaxOnly`); a resposta é tipada pelo schema e convertida
+> uma vez, sem validação manual; `ANILIST_ENDPOINT`, `AnimePageVariables` e
+> `AniListMedia` são exportados para os mocks. Detalhes no `DECISIONS.md`.
 
 #### Files
 - Create: `src/features/anime-list/lib/formats.ts`, `src/features/anime-list/types.ts`
