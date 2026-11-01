@@ -86,14 +86,12 @@ export const NoGenres: Story = {
 export const BrokenImage: Story = {
   args: { anime: animeBrokenImage },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('heading', { name: 'Kowareta Gazou' })).toBeVisible()
-    // #e46b50, a cor da fixture.
+    await expect(canvas.getByRole('heading', { name: animeBrokenImage.title })).toBeVisible()
+    // A capa que falhou sai da tela, sem o ícone de imagem quebrada do navegador.
+    await waitFor(() => expect(canvas.queryByRole('presentation')).not.toBeInTheDocument())
     await expect(canvas.getByRole('article')).toHaveStyle({
-      backgroundColor: 'rgb(228, 107, 80)',
+      backgroundColor: animeBrokenImage.cover.color,
     })
-    // A capa que falhou some, sem o ícone de imagem quebrada do navegador.
-    const cover = canvas.getByRole('presentation')
-    await waitFor(() => expect(cover).not.toBeVisible())
   },
 }
 
