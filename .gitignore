@@ -1,0 +1,7 @@
+agent-kit/
+node_modules/
+dist/
+coverage/
+*.local
+.DS_Store
+.claude/settings.local.json
