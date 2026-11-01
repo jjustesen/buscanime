@@ -174,3 +174,37 @@ atualizado ao fim de cada etapa.
   texto, e ele marcava tudo como "incompleto", o que não falha o teste. Ele provou
   com uma etiqueta de cor ruim de propósito (a story passava) e corrigiu com a opção
   `ignorePseudo`. Agora a etiqueta ruim faz 8 de 9 stories falharem.
+
+### Tasks 4 e 5: estado na URL e página
+
+- **Testes que provam que pegam o erro.** Nas duas tasks, os subagentes quebraram o
+  código de propósito (tirar a proteção contra entrada repetida no histórico, tirar o
+  `focus()` depois do "Ver mais", tirar a sincronia da busca) e confirmaram que os
+  testes falham. Num desses casos, o próprio subagente descobriu que um teste de foco
+  passava mesmo com o foco errado, e corrigiu o teste.
+- **Uma afirmação da IA checada e rejeitada.** O subagente da Task 5 disse que só 1
+  de 24 animes "em alta" tinha nota na API real, o que contrariaria o Figma (nota em
+  todo card). Antes de levar isso a mim como decisão, o agente principal consultou a
+  API: 11 de 12 animes da primeira página têm nota. A ordem "em alta" foi mantida.
+- **Mudança de plano justificada:** o plano previa remontar a barra de busca com
+  `key`; o subagente viu no navegador que isso tirava o foco do campo ao apertar
+  Enter, e usou o padrão do React de ajustar o estado durante o render.
+- **A revisão de aderência ao plano achou uma lacuna:** nenhum teste da página
+  conferia a cor da nota de ponta a ponta, um dos três requisitos do enunciado.
+  Entrou um teste com notas baixa, média e alta vindas da API simulada.
+- **A revisão de qualidade achou três bugs reais, reproduzidos com testes:**
+  - **Foco no lugar errado:** trocar de filtro enquanto o "Ver mais" carregava podia
+    jogar o foco para um card de outra lista. O foco agora é controlado só pela
+    página e só se move se o filtro ainda for o mesmo.
+  - **Foco perdido no "Ver mais":** com `disabled`, o navegador tirava o foco do
+    botão enquanto carregava; se o pedido falhasse, o foco ia para o início da
+    página. Isso não aparece no jsdom, só no navegador de verdade, então o teste
+    roda numa story no Chromium.
+  - **Mensagem de erro errada:** falhar ao atualizar uma lista já carregada mostrava
+    "Clique em Ver mais", sem o botão na tela.
+  - Também: o hook passou a devolver só o que a página usa (antes repassava o objeto
+    inteiro do TanStack, o que re-renderizava a página à toa), e o app e os testes
+    passaram a usar a mesma configuração do TanStack Query.
+- **O que não segui:** a revisão sugeriu trocar os botões de formato por um grupo de
+  rádio. Mantive os botões, porque é o que o Figma mostra, e registrei no
+  `DECISIONS.md`.

@@ -658,7 +658,7 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 4: Estado na URL (PR4)
-Status: TODO
+Status: COMPLETED
 
 #### Files
 - Create: `src/features/anime-list/hooks/useListParams.ts`
@@ -728,7 +728,14 @@ git commit
 ---
 
 ### Task 5: Página com filtro, busca e "Ver mais" (PR4)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução:** o `useAnimeList` devolve um modelo pequeno (não o
+> objeto inteiro do TanStack); a chave do query é `['anime', 'list', params]`; o foco
+> depois do "Ver mais" é controlado pela página e preso aos filtros; o botão usa
+> `aria-disabled`; a barra de busca sincroniza com a URL durante o render (sem `key`);
+> `createQueryClient` e `shouldRetry` compartilhados entre app e testes. Detalhes no
+> `DECISIONS.md`.
 
 #### Files
 - Create: `src/features/anime-list/hooks/useAnimeList.ts`

@@ -63,6 +63,40 @@ e as regras de código em `docs/CONVENTIONS.md`.
 - **Altura mínima de 270 px**, não fixa: com zoom só de texto, o conteúdo não é
   cortado.
 
+## Página
+
+- **Busca no envio, não a cada tecla.** O Figma tem o botão "Buscar", e a AniList
+  limita a 30 pedidos por minuto. O texto digitado é estado local da barra; só vai
+  para a URL ao enviar (botão ou Enter).
+- **A barra de busca sincroniza com a URL durante o render**, sem `useEffect` e sem
+  remontar o campo (padrão da documentação do React para ajustar estado quando uma
+  prop muda). O plano previa remontar com `key`, mas isso tirava o foco do campo ao
+  apertar Enter.
+- **Botões de formato com `aria-pressed`**, não um grupo de rádio. O Figma mostra
+  botões; um grupo de rádio pede navegação por setas, mais código para pouco ganho.
+- **"Ver mais":**
+  - O botão continua focável enquanto carrega (`aria-disabled`, não `disabled`).
+    Com `disabled`, o navegador joga o foco para o início da página.
+  - Depois de carregar, o foco vai para o primeiro card novo. O foco só é movido se
+    o filtro ainda for o mesmo de quando o botão foi clicado.
+  - Se falhar, os cards ficam e o próprio botão serve para tentar de novo.
+- **Erros diferentes, mensagens diferentes:** erro sem cards mostra a mensagem com
+  "Tentar de novo"; erro ao carregar mais fala do "Ver mais"; erro ao atualizar uma
+  lista que já está na tela mantém os cards e diz que não deu para atualizar.
+- **Repetidos removidos pelo `id`:** com a ordem "em alta", um anime pode mudar de
+  página entre um pedido e outro.
+- **Ao trocar de filtro, os cards antigos ficam esmaecidos** (`aria-busy`) até os
+  novos chegarem, em vez de piscar o esqueleto.
+- **Leitor de tela:** uma região `aria-live` anuncia carregando, vazio, erro e
+  "N animes de <formato> carregados". O contexto no texto garante que trocar entre
+  duas listas de 12 itens também seja anunciado.
+- **Exceções do axe:** além do selo da nota, o contraste fica desligado nas stories
+  do "Ver mais" (branco sobre amarelo do Figma, ~1,7:1) e da grade esmaecida
+  (conteúdo antigo com opacidade 0,5, marcado como `aria-busy`).
+- **Uma configuração do TanStack Query** (`createQueryClient`) para o app e para os
+  testes, que só desligam as novas tentativas. A regra de nova tentativa
+  (`shouldRetry`) tem teste próprio.
+
 ## Estado
 
 - **Filtro e busca na URL.** Recarregar mantém o filtro, o link pode ser
@@ -118,3 +152,5 @@ e as regras de código em `docs/CONVENTIONS.md`.
 - graphql-codegen para gerar os tipos a partir do schema da AniList.
 - Testes E2E com Playwright no deploy de preview.
 - Lighthouse CI em cada PR.
+- Respeitar o `Retry-After` da AniList no erro 429. Hoje a nova tentativa usa o
+  intervalo padrão (1 s e 2 s), que provavelmente bate no mesmo limite.
