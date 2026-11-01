@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, within } from 'storybook/test'
+import { expect, waitFor, within } from 'storybook/test'
 import {
   animeBrokenImage,
   animeHighScore,
@@ -91,6 +91,9 @@ export const BrokenImage: Story = {
     await expect(canvas.getByRole('article')).toHaveStyle({
       backgroundColor: 'rgb(228, 107, 80)',
     })
+    // A capa que falhou some, sem o ícone de imagem quebrada do navegador.
+    const cover = canvas.getByRole('presentation')
+    await waitFor(() => expect(cover).not.toBeVisible())
   },
 }
 

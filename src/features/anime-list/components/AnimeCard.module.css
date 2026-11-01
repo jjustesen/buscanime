@@ -14,6 +14,10 @@
   object-fit: cover;
 }
 
+.cover[data-failed='true'] {
+  visibility: hidden;
+}
+
 /* Degradê do Figma sobre a capa, para o texto branco aparecer em qualquer imagem. */
 .card::after {
   content: '';

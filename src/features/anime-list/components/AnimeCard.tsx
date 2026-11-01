@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Anime } from '../../../api/types'
 import styles from './AnimeCard.module.css'
 import { ScoreBadge } from './ScoreBadge'
@@ -16,6 +17,10 @@ export interface AnimeCardProps {
 
 /** Card do Figma: capa com degradê, título, gêneros e selo de nota. */
 export function AnimeCard({ anime, priority = 'lazy' }: AnimeCardProps) {
+  // O Chrome desenha um ícone de imagem quebrada no canto do card. Se a capa falhar,
+  // ela some e fica só a cor de fundo.
+  const [coverFailed, setCoverFailed] = useState(false)
+
   return (
     // A cor média da capa vem do dado: é o fundo enquanto a imagem carrega ou se ela quebrar.
     <article className={styles.card} style={{ backgroundColor: anime.cover.color ?? undefined }}>
@@ -29,6 +34,8 @@ export function AnimeCard({ anime, priority = 'lazy' }: AnimeCardProps) {
         loading={priority === 'lazy' ? 'lazy' : 'eager'}
         fetchPriority={priority === 'high' ? 'high' : 'auto'}
         decoding="async"
+        data-failed={coverFailed}
+        onError={() => setCoverFailed(true)}
       />
       <div className={styles.content}>
         <h2 className={styles.title}>{anime.title}</h2>
