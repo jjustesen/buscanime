@@ -88,9 +88,7 @@ interface AniListTitle {
 
 /** Capa que a query pede. */
 interface AniListCoverImage {
-  /** Capa com 230 px de largura. */
-  large: string | null
-  /** Capa com 460 px de largura. */
+  /** Capa com 460 px de largura, a maior que a AniList tem. */
   extraLarge: string | null
   /** Cor média da capa em hex. */
   color: string | null
@@ -169,9 +167,9 @@ function toAnime(media: AniListMedia): Anime {
     id: media.id,
     // `||` e não `??`: romaji vazio também cai para o título preferido.
     title: media.title?.romaji || media.title?.userPreferred || '',
-    // A AniList não redimensiona: `large` tem 230 px e `extraLarge` 460 px.
+    // `extraLarge` (460 px) é a maior capa da AniList. As menores têm menos que os 280 px
+    // do card mais estreito, então nunca servem.
     cover: {
-      medium: media.coverImage?.large ?? '',
       large: media.coverImage?.extraLarge ?? '',
       color: media.coverImage?.color ?? null,
     },

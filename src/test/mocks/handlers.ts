@@ -21,11 +21,7 @@ function toAniListMedia(anime: Anime): AniListMedia {
   return {
     id: anime.id,
     title: { romaji: anime.title, userPreferred: anime.title },
-    coverImage: {
-      large: anime.cover.medium,
-      extraLarge: anime.cover.large,
-      color: anime.cover.color,
-    },
+    coverImage: { extraLarge: anime.cover.large, color: anime.cover.color },
     genres: anime.genres,
     averageScore: anime.averageScore,
   }

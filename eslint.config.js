@@ -25,6 +25,9 @@ export default defineConfig([
     rules: {
       // docs/CONVENTIONS.md, seção 5: sem non-null assertion
       '@typescript-eslint/no-non-null-assertion': 'error',
+      // docs/CONVENTIONS.md, seção 8: o Safari com VoiceOver tira a semântica de lista
+      // de um <ul> sem marcadores, então o role="list" explícito não é redundante.
+      'jsx-a11y/no-redundant-roles': ['error', { ul: ['list'] }],
     },
   },
   storybook.configs['flat/recommended'],

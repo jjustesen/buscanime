@@ -11,8 +11,7 @@ export interface AnimeFixture {
   format: Format
 }
 
-// Capas locais: os testes e as stories não dependem da internet. Um SVG vale para os
-// dois tamanhos do `srcset`.
+// Capas locais: os testes e as stories não dependem da internet.
 const COVERS = [
   { url: purpleCover, color: '#774dc5' },
   { url: tealCover, color: '#01ada6' },
@@ -29,7 +28,7 @@ function makeAnime(
   return {
     id,
     title,
-    cover: { medium: cover.url, large: cover.url, color: cover.color },
+    cover: { large: cover.url, color: cover.color },
     genres,
     averageScore,
   }
@@ -51,7 +50,7 @@ export const animeNoGenres = makeAnime(6, 'Mujin Eki', 65, [])
 export const animeBrokenImage: Anime = {
   id: 900,
   title: 'Kowareta Gazou',
-  cover: { medium: '/missing-cover.jpg', large: '/missing-cover.jpg', color: '#e46b50' },
+  cover: { large: '/missing-cover.jpg', color: '#e46b50' },
   genres: ['Horror'],
   averageScore: 55,
 }

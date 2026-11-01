@@ -63,7 +63,7 @@ App → features/ → components/ → styles/
 - CSS Modules. Classes em camelCase (`.scoreBadge`).
 - Cores, fontes, raios e larguras vêm de `src/styles/tokens.css`, com os nomes das
   variáveis do Figma. Nada de cor ou fonte solta. Uma medida que só existe num lugar
-  (a altura de 270 px do card) pode ficar no próprio módulo.
+  (a altura mínima de 270 px do card) pode ficar no próprio módulo.
 - Estado visual sai em atributo, não em classe montada por string: `data-tone="mid"`,
   `aria-pressed="true"`, `aria-busy="true"`. O CSS e os testes usam o mesmo atributo.
 - Valores de referência: `docs/figma/spec.md`.

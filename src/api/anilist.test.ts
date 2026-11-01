@@ -61,7 +61,7 @@ describe('fetchAnimePage: a resposta', () => {
         {
           id: 42,
           title: { romaji: 'Sousou no Frieren', userPreferred: 'Frieren' },
-          coverImage: { large: 'medium.jpg', extraLarge: 'large.jpg', color: '#e4a15d' },
+          coverImage: { extraLarge: 'large.jpg', color: '#e4a15d' },
           genres: ['Adventure', 'Drama', 'Fantasy', 'Slice of Life', 'Comedy'],
           averageScore: 91,
         },
@@ -74,7 +74,7 @@ describe('fetchAnimePage: a resposta', () => {
       {
         id: 42,
         title: 'Sousou no Frieren',
-        cover: { medium: 'medium.jpg', large: 'large.jpg', color: '#e4a15d' },
+        cover: { large: 'large.jpg', color: '#e4a15d' },
         genres: ['Adventure', 'Drama', 'Fantasy'],
         averageScore: 91,
       },
@@ -88,7 +88,7 @@ describe('fetchAnimePage: a resposta', () => {
         {
           id: 1,
           title: { romaji, userPreferred: 'Frieren' },
-          coverImage: { large: 'a.jpg', extraLarge: 'b.jpg', color: null },
+          coverImage: { extraLarge: 'b.jpg', color: null },
           genres: [],
           averageScore: null,
         },
@@ -114,7 +114,7 @@ describe('fetchAnimePage: a resposta', () => {
       {
         id: 7,
         title: '',
-        cover: { medium: '', large: '', color: null },
+        cover: { large: '', color: null },
         genres: [],
         averageScore: null,
       },

@@ -524,7 +524,13 @@ Use the pull-request-manager and the ci-handler skills.
 ---
 
 ### Task 3: Card do anime (PR3)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução:** sem `srcSet`/`sizes` (só a capa de 460 px; `cover.medium`
+> saiu do tipo e da query); capa que falha deixa de ser renderizada e fica a cor média;
+> `isolation: isolate` no card; `min-height` em vez de `height`; o `CardSkeleton` não
+> tem `aria-hidden` (quem esconde é a grade de esqueletos da Task 5); o axe ignora o
+> contraste só no selo da nota. Detalhes no `DECISIONS.md`.
 
 #### Files
 - Create: `src/features/anime-list/lib/scoreTone.ts`
@@ -845,7 +851,12 @@ O `role="list"` é proposital: o Safari com VoiceOver tira a semântica de lista
 `ul` com `list-style: none`. Cada `<li>`
 tem `tabIndex={-1}`. Num `useEffect` depois de os animes mudarem, se `focusIndex.current`
 não for nulo, foca o `<li>` desse índice e zera o ref. Os 4 primeiros cards recebem
-`priority="eager"` e o primeiro `"high"`.
+`priority="eager"` e o primeiro `"high"`. Cada `AnimeCard` usa `key={anime.id}`: o card
+guarda se a capa falhou e conta com isso para não reaproveitar o estado entre animes.
+
+`SkeletonGrid` (no mesmo arquivo da grade ou ao lado): 12 `CardSkeleton` dentro de um
+contêiner com `aria-hidden="true"`. O leitor de tela fica sabendo do carregamento pelo
+`StatusMessage`, não por 12 itens vazios.
 
 `LoadMoreButton`: 48 px, `--color-warning`, `--radius-md`, ícone `icon-add.svg` (24 px,
 `alt=""`) + "Ver mais" em 20 px SemiBold branco. Com `loading`, fica `disabled` e mostra
