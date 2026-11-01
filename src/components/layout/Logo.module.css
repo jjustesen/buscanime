@@ -1,0 +1,18 @@
+.logo {
+  font-family: var(--font-family);
+  font-weight: 400;
+  line-height: normal;
+  color: var(--color-white);
+}
+
+.logo[data-size='lg'] {
+  font-size: 40px;
+}
+
+.logo[data-size='sm'] {
+  font-size: 24px;
+}
+
+.highlight {
+  color: var(--color-warning);
+}
