@@ -40,6 +40,19 @@ input {
   outline-offset: 2px;
 }
 
+/* Quem pede menos movimento no sistema não vê transição nem animação, nem as que
+   entrarem depois. 0.01ms, não 0: o evento transitionend continua disparando. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Some da tela, mas continua sendo lido pelo leitor de tela. */
 .visually-hidden {
   position: absolute;

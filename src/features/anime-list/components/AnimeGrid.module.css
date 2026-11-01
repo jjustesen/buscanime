@@ -13,6 +13,9 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  /* Esmaece e volta aos poucos, para a troca de filtro não piscar. Some com
+     prefers-reduced-motion (global.css). */
+  transition: opacity 0.2s ease-out;
 }
 
 /* Cards do filtro anterior, enquanto os novos não chegam. */
