@@ -6,7 +6,7 @@ export function Footer() {
   return (
     <footer className={styles.footer}>
       <Logo size="sm" />
-      <p className={styles.rights}>TODOS OS DIREITOS RESERVADOS</p>
+      <p className={styles.rights}>Todos os direitos reservados</p>
     </footer>
   )
 }

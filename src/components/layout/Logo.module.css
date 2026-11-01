@@ -1,8 +1,7 @@
+/* A cor vem de quem usa o logo (header e footer pintam o texto de branco). */
 .logo {
-  font-family: var(--font-family);
   font-weight: 400;
-  line-height: normal;
-  color: var(--color-white);
+  text-transform: uppercase;
 }
 
 .logo[data-size='lg'] {

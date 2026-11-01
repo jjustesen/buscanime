@@ -4,7 +4,6 @@ import { Header } from './Header'
 
 const meta = {
   component: Header,
-  tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof Header>
 
@@ -15,6 +14,6 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('banner')).toBeVisible()
-    await expect(canvas.getByRole('heading', { level: 1, name: 'BUSCANIME' })).toBeVisible()
+    await expect(canvas.getByRole('heading', { level: 1, name: /buscanime/i })).toBeVisible()
   },
 }

@@ -2,12 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 68px;
+  min-height: 68px;
+  color: var(--color-white);
   background: var(--color-primary);
-}
-
-/* O h1 só dá a semântica; o tamanho vem do Logo. */
-.title {
-  font-size: inherit;
-  font-weight: inherit;
 }

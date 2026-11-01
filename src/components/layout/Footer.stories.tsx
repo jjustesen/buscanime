@@ -4,7 +4,6 @@ import { Footer } from './Footer'
 
 const meta = {
   component: Footer,
-  tags: ['autodocs'],
   parameters: { layout: 'fullscreen' },
 } satisfies Meta<typeof Footer>
 
@@ -15,6 +14,6 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('contentinfo')).toBeVisible()
-    await expect(canvas.getByText('TODOS OS DIREITOS RESERVADOS')).toBeVisible()
+    await expect(canvas.getByText(/todos os direitos reservados/i)).toBeVisible()
   },
 }

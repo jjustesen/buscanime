@@ -5,7 +5,7 @@ import { Logo } from './Logo'
 export function Header() {
   return (
     <header className={styles.header}>
-      <h1 className={styles.title}>
+      <h1>
         <Logo size="lg" />
       </h1>
     </header>

@@ -3,11 +3,11 @@ import { Logo } from './Logo'
 
 const meta = {
   component: Logo,
-  tags: ['autodocs'],
-  // O logo é branco: sem o fundo roxo do header, ele some e o axe acusa contraste.
+  // O logo herda a cor do texto. O decorator faz o papel do header (fundo roxo, texto branco):
+  // sem ele o logo fica sobre fundo branco e o axe acusa contraste.
   decorators: [
     (Story) => (
-      <div style={{ background: 'var(--color-primary)', padding: 16 }}>
+      <div style={{ background: 'var(--color-primary)', color: 'var(--color-white)', padding: 16 }}>
         <Story />
       </div>
     ),

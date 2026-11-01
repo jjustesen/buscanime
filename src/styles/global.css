@@ -1,3 +1,10 @@
+/* Ponto de entrada único do CSS global: fonte, tokens e reset, nesta ordem. */
+/* Só o subconjunto latino e os três pesos do Figma, para baixar menos fonte. */
+@import '@fontsource/mulish/latin-400.css';
+@import '@fontsource/mulish/latin-600.css';
+@import '@fontsource/mulish/latin-700.css';
+@import './tokens.css';
+
 *,
 *::before,
 *::after {
@@ -8,14 +15,8 @@ body,
 h1,
 h2,
 h3,
-p,
-ul {
+p {
   margin: 0;
-}
-
-ul {
-  padding: 0;
-  list-style: none;
 }
 
 body {

@@ -1,10 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { App } from './App'
-import './styles/fonts'
-import './styles/tokens.css'
+// Antes do App: assim o reset e os tokens vêm antes do CSS dos componentes no build.
 import './styles/global.css'
+import { App } from './App'
 
 const queryClient = new QueryClient()
 

@@ -6,11 +6,14 @@ export interface LogoProps {
   size: 'lg' | 'sm'
 }
 
-/** Logo em texto, como no Figma: "BUSC" na cor do texto e "ANIME" em amarelo. */
+/**
+ * Logo em texto, como no Figma: "BUSC" herda a cor do texto de quem o usa e "ANIME" usa
+ * `--color-warning`. As maiúsculas vêm do CSS, para o leitor de tela não soletrar.
+ */
 export function Logo({ size }: LogoProps) {
   return (
     <span className={styles.logo} data-size={size}>
-      BUSC<span className={styles.highlight}>ANIME</span>
+      Busc<span className={styles.highlight}>anime</span>
     </span>
   )
 }
