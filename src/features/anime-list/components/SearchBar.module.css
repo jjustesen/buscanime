@@ -22,9 +22,8 @@
   color: var(--color-gray);
 }
 
-/* Em tela estreita só o campo encolhe; o botão mantém os 86 px do Figma. */
+/* 86 px do Figma. Em tela estreita quem encolhe é o campo (flex: 1). */
 .button {
-  flex-shrink: 0;
   width: 86px;
   min-height: 38px;
   border: none;

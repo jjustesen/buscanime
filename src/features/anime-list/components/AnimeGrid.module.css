@@ -1,8 +1,9 @@
 /* Medidas de docs/figma/spec.md: 21 px entre linhas e 16 px entre colunas, largura máxima
    de 1316 px. O Figma só tem a tela de 1366 px; nas outras, cabem quantas colunas de pelo
    menos 280 px couberem. Em 1316 px cabem exatamente 4 (5 pediriam 1464 px), de 317 px
-   cada, como no Figma. O min() deixa a coluna única encolher abaixo de 280 px em telas
-   de 320 px, em vez de abrir uma rolagem lateral. */
+   cada, como no Figma (sem barra de rolagem; com a barra clássica do Windows, ~313 px).
+   O min() deixa a coluna única encolher abaixo de 280 px em telas de 320 px, em vez de
+   abrir uma rolagem lateral. */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
@@ -13,9 +14,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Esmaece e volta aos poucos, para a troca de filtro não piscar. Some com
-     prefers-reduced-motion (global.css). */
-  transition: opacity 0.2s ease-out;
+}
+
+/* Esmaece e volta aos poucos, para a troca de filtro não piscar. Só para quem não pediu
+   menos movimento ao sistema; para os outros, a opacidade muda de uma vez. */
+@media (prefers-reduced-motion: no-preference) {
+  .grid {
+    transition: opacity 0.2s ease-out;
+  }
 }
 
 /* Cards do filtro anterior, enquanto os novos não chegam. */

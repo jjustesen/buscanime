@@ -16,8 +16,9 @@ export interface AnimeGridProps {
   ref?: Ref<HTMLUListElement>
 }
 
-// A primeira linha (4 cards) é a primeira dobra no Figma: baixa já. O primeiro card é o
-// maior elemento da tela (LCP), então vem com prioridade alta.
+// Os 4 primeiros cards baixam já: no desktop são a primeira linha. No celular ocupam
+// várias linhas, mas ficam dentro da distância em que o Chrome já carregaria as imagens
+// "lazy". O primeiro card é o maior elemento da tela (LCP), então vem com prioridade alta.
 function coverPriority(index: number): AnimeCardProps['priority'] {
   if (index === 0) return 'high'
   if (index < 4) return 'eager'
