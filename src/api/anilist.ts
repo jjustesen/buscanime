@@ -114,6 +114,14 @@ export class AniListError extends Error {
   }
 }
 
+// Regra de nova tentativa do TanStack Query (`retry`). `failureCount` é quantas vezes o
+// pedido já falhou antes desta, a partir de 0. Até 2 novas tentativas, só quando o erro é
+// passageiro: um 400, um erro do GraphQL ou um bug no código dariam o mesmo resultado de
+// novo, e a AniList limita a 30 pedidos por minuto.
+export function shouldRetry(failureCount: number, error: unknown): boolean {
+  return failureCount < 2 && error instanceof AniListError && error.retryable
+}
+
 export async function fetchAnimePage(
   request: AnimePageRequest,
   signal?: AbortSignal,

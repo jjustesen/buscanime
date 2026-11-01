@@ -1,21 +1,15 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { respondNever } from '../../../test/mocks/handlers'
 import { server } from '../../../test/mocks/server'
+import { createTestQueryClient, withClient } from '../../../test/renderWithClient'
 import type { ListParams } from '../types'
 import { useAnimeList } from './useAnimeList'
 
 const allFormats: ListParams = { format: 'ALL', search: '' }
 
-// Um QueryClient novo por teste, para um não ver o cache do outro.
 function renderUseAnimeList(params: ListParams) {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  )
-  return renderHook(() => useAnimeList(params), { wrapper })
+  return renderHook(() => useAnimeList(params), { wrapper: withClient(createTestQueryClient()) })
 }
 
 describe('useAnimeList', () => {

@@ -9,7 +9,7 @@ import {
   respondWithStatus,
 } from '../test/mocks/handlers'
 import { server } from '../test/mocks/server'
-import { AniListError, fetchAnimePage, type AnimePageVariables } from './anilist'
+import { AniListError, fetchAnimePage, shouldRetry, type AnimePageVariables } from './anilist'
 import type { AnimePageRequest } from './types'
 
 const firstPage: AnimePageRequest = { page: 1, format: null, search: '' }
@@ -198,5 +198,27 @@ describe('fetchAnimePage: os erros', () => {
 
     expect(error).not.toBeInstanceOf(AniListError)
     expect(error).toMatchObject({ name: 'AbortError' })
+  })
+})
+
+describe('shouldRetry', () => {
+  // `failureCount` é quantas vezes o pedido já falhou antes desta: 0 na primeira falha.
+  it.each([
+    ['falha de rede', new AniListError('rede')],
+    ['429', new AniListError('limite', 429)],
+    ['500', new AniListError('servidor', 500)],
+    ['503', new AniListError('servidor', 503)],
+  ])('%s: tenta de novo até 2 vezes', (_, error) => {
+    expect(shouldRetry(0, error)).toBe(true)
+    expect(shouldRetry(1, error)).toBe(true)
+    expect(shouldRetry(2, error)).toBe(false)
+  })
+
+  it.each([
+    ['400', new AniListError('pedido inválido', 400)],
+    ['erro do GraphQL com status 200', new AniListError('Invalid format', 200)],
+    ['erro que não é da AniList', new TypeError('bug no código')],
+  ])('%s: nunca tenta de novo', (_, error) => {
+    expect(shouldRetry(0, error)).toBe(false)
   })
 })
