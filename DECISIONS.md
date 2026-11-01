@@ -50,12 +50,14 @@ e as regras de código em `docs/CONVENTIONS.md`.
 ## Card
 
 - **Uma capa só (460 px), sem `srcset`.** A AniList não redimensiona imagens; os
-  tamanhos que ela tem são 100, 230 e 460 px de largura. Nenhum card fica com menos
-  de 280 px, então a de 230 px nunca seria a escolhida pelo navegador.
+  tamanhos que ela tem são 100, 230 e 460 px de largura. O card mais estreito tem
+  270 px (tela de 320 px), então a de 230 px nunca seria a escolhida pelo navegador.
 - **Prioridade da imagem por uma prop só** (`priority: 'high' | 'eager' | 'lazy'`):
-  a primeira linha carrega na hora, o primeiro card com prioridade alta (é o maior
+  os 4 primeiros cards carregam na hora, o primeiro com prioridade alta (é o maior
   elemento da primeira tela), o resto sob demanda. Uma prop evita combinações sem
-  sentido, como "lazy" com prioridade alta.
+  sentido, como "lazy" com prioridade alta. No celular esses 4 cards ocupam várias
+  linhas, mas não vale ajustar: o Chrome já carrega imagens "lazy" a até 1250 px da
+  tela, então o ganho seria só no Safari e pediria código para contar colunas.
 - **Capa que falha some**, e fica a cor média da capa (`coverImage.color`) ou um cinza.
   Sem isso, o Chrome desenha o ícone de imagem quebrada no canto do card.
 - **Degradê com cores literais** no CSS do card: não é variável do Figma e só existe
@@ -86,7 +88,33 @@ e as regras de código em `docs/CONVENTIONS.md`.
 - **Repetidos removidos pelo `id`:** com a ordem "em alta", um anime pode mudar de
   página entre um pedido e outro.
 - **Ao trocar de filtro, os cards antigos ficam esmaecidos** (`aria-busy`) até os
-  novos chegarem, em vez de piscar o esqueleto.
+  novos chegarem, em vez de piscar o esqueleto. O esmaecer tem uma transição de
+  0,2 s (não está no Figma, que não tem esse estado), desligada para quem pede menos
+  movimento ao sistema.
+
+## Telas menores e desempenho
+
+- **Grade fluida sem breakpoints:** `repeat(auto-fill, minmax(min(280px, 100%), 1fr))`
+  com largura máxima de 1316 px. Dá 4 colunas de 317 px a 1366 px, como no Figma, e
+  3, 2 e 1 coluna em telas menores. O `min()` deixa a coluna única caber em 320 px.
+  - O plano previa forçar 4 × 317 px a partir de 1366 px. Não fiz: a largura da
+    janela inclui a barra de rolagem, e com a barra clássica do Windows (15 px) isso
+    abriria 15 px de rolagem lateral. Com essa barra, os cards ficam com ~313 px.
+- **Filtros quebram linha** e a busca ocupa a largura toda em telas estreitas; o
+  botão "Buscar" mantém os 86 px. Sem rolagem lateral até 320 px.
+- **Sem link de "pular para o conteúdo":** o header é só o logo, a página tem o
+  marco `main` e não há menu repetido; do topo até o primeiro card são 10 paradas de
+  Tab (8 filtros, o campo e o botão).
+- **Sem `React.memo`, porque a medição não pediu.** Com o Profiler do React no
+  Chromium (build de desenvolvimento, com StrictMode), um "Ver mais" de 48 para 60
+  cards levou ~11 ms (mediana de 7 rodadas); com `memo` no card, ~5 ms. O limite do
+  plano era 16 ms, e a convenção só aceita `memo` com motivo medido.
+  - O build de desenvolvimento com StrictMode exagera o custo; em produção deve ser
+    bem menor.
+  - Um celular fraco é ~4 vezes mais lento, o que pode passar de 16 ms. Mesmo assim,
+    o que importa para o clique é o INP (bom até 200 ms), muito acima disso.
+  - O custo cresce com o número de cards na tela.
+  - Se o Lighthouse mobile apontar INP ruim, o `memo` no card é o primeiro passo.
 - **Leitor de tela:** uma região `aria-live` anuncia carregando, vazio, erro e
   "N animes de <formato> carregados". O contexto no texto garante que trocar entre
   duas listas de 12 itens também seja anunciado.

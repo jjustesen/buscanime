@@ -925,7 +925,7 @@ Use the pull-request-manager and the ci-handler skills. PR4 leva as Tasks 4 e 5.
 ---
 
 ### Task 6: Responsivo, acessibilidade e desempenho (PR5)
-Status: TODO
+Status: COMPLETED
 
 #### Files
 - Modify: os `.module.css` de `AnimeListPage`, `FormatFilter`, `SearchBar`, `AnimeGrid`
