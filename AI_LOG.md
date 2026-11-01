@@ -220,3 +220,27 @@ atualizado ao fim de cada etapa.
   Isso também explica a afirmação "só 1 de 24 tem nota" do subagente da Task 5, que
   eu tinha rejeitado: ele olhou a página, eu olhei a API sem o `format: null`. Os dois
   viram coisas reais, e só comparar os pedidos mostrou a diferença.
+
+### Task 6: telas menores, acessibilidade e desempenho
+
+- **Medir antes de otimizar.** O subagente mediu um "Ver mais" com o Profiler do React
+  no Chromium real (~11 ms), testou o `memo` só para comparar (~5 ms), desfez, e não
+  adicionou porque ficou abaixo do limite combinado. O código de medição não foi
+  commitado.
+- **A revisão corrigiu a interpretação da medição**, não o número: o build de
+  desenvolvimento com StrictMode exagera o custo, e a métrica que importa para um
+  clique é o INP, não 16 ms. Os dois pontos foram para o `DECISIONS.md`.
+- **Uma decisão do plano revertida pela revisão:** o plano (escrito pela IA) forçava
+  4 colunas de 317 px a 1366 px. O subagente não fez isso, e o revisor calculou por
+  quê: com a barra de rolagem do Windows, abriria 15 px de rolagem lateral.
+- **O que a revisão pegou, e foi corrigido:**
+  - Uma regra global de movimento reduzido com `!important` em tudo virou uma
+    transição que só existe para quem não pediu menos movimento.
+  - Uma linha de CSS que não fazia nada (`flex-shrink: 0` no botão) e dois
+    comentários que ficaram desatualizados com a grade fluida.
+  - Uma busca longa sem espaço (uma URL colada) abria rolagem lateral no celular.
+- **Conferência visual:** prints em 1366, 1024, 768, 375 e 320 px, sem rolagem lateral
+  em nenhuma largura, e o contorno de foco visível no card focado depois do "Ver mais".
+- **Processo:** como a task mudou só CSS (2 commits), juntei as revisões de aderência
+  ao plano e de qualidade numa só.
+- **O que não segui:** nada da revisão foi rejeitado nesta task.
