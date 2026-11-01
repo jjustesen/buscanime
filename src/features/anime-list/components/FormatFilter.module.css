@@ -1,8 +1,10 @@
-/* Medidas de docs/figma/spec.md: uma linha centrada, 19 px entre os botões. */
+/* Medidas de docs/figma/spec.md: uma linha centrada, 19 px entre os botões. Em telas
+   estreitas os botões quebram linha, ainda centrados, com 12 px entre as linhas. */
 .group {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 19px;
+  gap: 12px 19px;
 }
 
 .button {

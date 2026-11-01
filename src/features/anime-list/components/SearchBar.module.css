@@ -1,4 +1,5 @@
-/* Medidas de docs/figma/spec.md: linha de até 1012 px, campo e botão com 38 px de altura. */
+/* Medidas de docs/figma/spec.md: linha de até 1012 px, campo e botão com 38 px de altura.
+   Abaixo disso a linha ocupa a largura toda, dentro do recuo lateral da página. */
 .form {
   display: flex;
   gap: 10px;
@@ -21,7 +22,9 @@
   color: var(--color-gray);
 }
 
+/* Em tela estreita só o campo encolhe; o botão mantém os 86 px do Figma. */
 .button {
+  flex-shrink: 0;
   width: 86px;
   min-height: 38px;
   border: none;

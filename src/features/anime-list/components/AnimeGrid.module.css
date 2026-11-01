@@ -1,8 +1,11 @@
-/* Medidas de docs/figma/spec.md: 4 colunas (317 px cada em 1366 px de tela), 21 px entre
-   linhas e 16 px entre colunas. A largura é máxima, não fixa. */
+/* Medidas de docs/figma/spec.md: 21 px entre linhas e 16 px entre colunas, largura máxima
+   de 1316 px. O Figma só tem a tela de 1366 px; nas outras, cabem quantas colunas de pelo
+   menos 280 px couberem. Em 1316 px cabem exatamente 4 (5 pediriam 1464 px), de 317 px
+   cada, como no Figma. O min() deixa a coluna única encolher abaixo de 280 px em telas
+   de 320 px, em vez de abrir uma rolagem lateral. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 21px 16px;
   width: 100%;
   max-width: var(--content-width);
