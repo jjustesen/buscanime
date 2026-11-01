@@ -1,0 +1,21 @@
+/* Medidas de docs/figma/spec.md: a largura da grade, 48 px de altura, ícone e texto centrados. */
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: var(--content-width);
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-white);
+  background: var(--color-warning);
+  cursor: pointer;
+}
+
+.button:disabled {
+  cursor: progress;
+}
