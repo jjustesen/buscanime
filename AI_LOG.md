@@ -136,3 +136,41 @@ atualizado ao fim de cada etapa.
   - Os mocks passaram a usar o tipo da resposta da AniList, para que renomear um
     campo da query quebre o typecheck em vez de passar em silêncio.
 - **O que não segui:** nada da revisão foi rejeitado nesta task.
+
+### Task 3: card do anime
+
+- **O CI do PR2 quebrou pelo mesmo motivo do PR1** (lockfile do npm 11.6). Na segunda
+  vez, a correção virou regra nas convenções: dependências se instalam com
+  `npx npm@11.21.1` e se confere com `npm ci --dry-run` antes de enviar.
+- **Um erro da própria IA.** Ao ler o log do CI, o agente principal escreveu um
+  `grep` com crases entre aspas duplas. O shell executou o que estava entre as crases,
+  um `npm ci` local, que apagou parte do `node_modules` e travou num arquivo preso
+  por um `vite preview` esquecido por um subagente. Nada foi enviado. Encerrei o
+  servidor, a IA reinstalou e conferiu que nada faltava, e a regra "nunca use crases
+  dentro de aspas duplas" entrou nas convenções.
+- **Medição contra o Figma.** O subagente mediu o card no Storybook gerado: 317 × 270,
+  conteúdo a 28/23 px, etiquetas e selo nas posições do Figma.
+- **O que a revisão de qualidade pegou, e foi corrigido:**
+  - **`srcset` que não fazia nada.** O plano (escrito pela IA) previa duas capas
+    (230 e 460 px). A revisão calculou que nenhum card fica com menos de 280 px, então
+    o navegador sempre escolheria a de 460 px, e o `sizes` ainda estava errado para a
+    grade fluida. Ficou uma capa só, e a de 230 px saiu da query.
+  - **Um teste que falharia por acaso.** A story da capa quebrada procurava a imagem
+    depois de ela já poder ter sumido. Agora espera a imagem sair da tela, sem
+    depender do tempo de rede.
+  - **Capa quebrada mais simples:** em vez de estado + atributo + regra de CSS, a
+    imagem que falha deixa de ser renderizada.
+  - **`z-index` vazando** para fora do card (atrapalharia um filtro fixo no topo).
+    Resolvido com `isolation: isolate`.
+  - **Acessibilidade:** altura mínima no card (zoom de texto não corta), e o
+    `aria-hidden` dos esqueletos foi para a grade, onde de fato esconde a lista.
+  - **O axe estava desligado no card inteiro** para o contraste. Agora ignora só o
+    selo da nota e continua checando as etiquetas de gênero, que estão no limite
+    (4,55:1).
+- **O que não segui:** nada da revisão foi rejeitado nesta task.
+- **Um teste que não testava nada, achado na correção.** Ao restringir a exceção do
+  axe ao selo da nota, o subagente descobriu que as etiquetas de gênero nunca tinham
+  sido checadas: o degradê do card (um `::after`) deixava o axe sem conseguir medir o
+  texto, e ele marcava tudo como "incompleto", o que não falha o teste. Ele provou
+  com uma etiqueta de cor ruim de propósito (a story passava) e corrigiu com a opção
+  `ignorePseudo`. Agora a etiqueta ruim faz 8 de 9 stories falharem.

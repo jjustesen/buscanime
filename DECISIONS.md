@@ -47,6 +47,22 @@ e as regras de código em `docs/CONVENTIONS.md`.
   cru `AniListMedia`. Assim os mocks usam o mesmo endereço e o mesmo formato do
   cliente, e o typecheck pega uma mudança na query.
 
+## Card
+
+- **Uma capa só (460 px), sem `srcset`.** A AniList não redimensiona imagens; os
+  tamanhos que ela tem são 100, 230 e 460 px de largura. Nenhum card fica com menos
+  de 280 px, então a de 230 px nunca seria a escolhida pelo navegador.
+- **Prioridade da imagem por uma prop só** (`priority: 'high' | 'eager' | 'lazy'`):
+  a primeira linha carrega na hora, o primeiro card com prioridade alta (é o maior
+  elemento da primeira tela), o resto sob demanda. Uma prop evita combinações sem
+  sentido, como "lazy" com prioridade alta.
+- **Capa que falha some**, e fica a cor média da capa (`coverImage.color`) ou um cinza.
+  Sem isso, o Chrome desenha o ícone de imagem quebrada no canto do card.
+- **Degradê com cores literais** no CSS do card: não é variável do Figma e só existe
+  ali.
+- **Altura mínima de 270 px**, não fixa: com zoom só de texto, o conteúdo não é
+  cortado.
+
 ## Estado
 
 - **Filtro e busca na URL.** Recarregar mantém o filtro, o link pode ser
@@ -71,8 +87,12 @@ e as regras de código em `docs/CONVENTIONS.md`.
   | Texto de exemplo da busca `#A7B0BE`   | ~2,2:1    | 4,5:1     |
 
   Mantive as cores porque o enunciado manda reproduzir o Figma. A correção sugerida é
-  usar texto escuro sobre amarelo e verde, sem mexer nos fundos. Nas stories, só a
-  regra `color-contrast` do axe fica desligada, e só nesses componentes.
+  usar texto escuro sobre amarelo e verde, sem mexer nos fundos. Nas stories, a regra
+  `color-contrast` do axe fica desligada só para o selo da nota. No card, ela continua
+  valendo para as etiquetas de gênero, com a opção `ignorePseudo`: sem ela, o degradê
+  do card (um `::after`) deixava o axe sem conseguir medir nenhum texto, e as
+  etiquetas nunca eram checadas de verdade. O título sobre a capa continua sem
+  checagem automática, porque o axe não mede texto sobre imagem.
 
 - **Ordem padrão "em alta" (`TRENDING_DESC`)**, porque os animes do Figma são os que
   estavam em alta quando o design foi feito. Com busca, a ordem é por relevância
