@@ -124,3 +124,12 @@ export function respondNeverOnPage(page: number) {
     return HttpResponse.json(body)
   })
 }
+
+// Responde como o padrão, mas só depois que `gate` resolver: o teste decide quando a
+// resposta chega e confere a tela no meio do caminho.
+export function respondAfter(gate: Promise<void>) {
+  return anilist(async (variables) => {
+    await gate
+    return HttpResponse.json(fixturePage(variables))
+  })
+}

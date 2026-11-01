@@ -4,7 +4,14 @@ import { StatusMessage } from './StatusMessage'
 
 const meta = {
   component: StatusMessage,
-  args: { status: 'success', count: 12, search: '', onRetry: fn(), onClear: fn() },
+  args: {
+    status: 'success',
+    count: 12,
+    formatLabel: 'All Formats',
+    search: '',
+    onRetry: fn(),
+    onClear: fn(),
+  },
 } satisfies Meta<typeof StatusMessage>
 
 export default meta
@@ -73,9 +80,23 @@ export const RefreshError: Story = {
   },
 }
 
-/** Lista carregada: a contagem é só para o leitor de tela. */
+/**
+ * Lista carregada: a contagem é só para o leitor de tela. O formato no texto faz trocar
+ * entre duas listas de 12 também mudar o anúncio.
+ */
 export const Loaded: Story = {
+  args: { formatLabel: 'TV Show' },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('12 animes carregados')).toHaveClass('visually-hidden')
+    await expect(canvas.getByText('12 animes de TV Show carregados')).toHaveClass('visually-hidden')
+  },
+}
+
+/** Lista carregada de uma busca: o texto buscado também entra no anúncio. */
+export const LoadedWithSearch: Story = {
+  args: { count: 1, search: 'naruto' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('1 anime de All Formats para "naruto" carregado')).toHaveClass(
+      'visually-hidden',
+    )
   },
 }

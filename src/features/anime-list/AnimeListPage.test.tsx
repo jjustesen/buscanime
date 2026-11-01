@@ -10,6 +10,7 @@ import {
 } from '../../test/mocks/fixtures'
 import {
   captureVariables,
+  respondAfter,
   respondNeverOnPage,
   respondWithPages,
   respondWithStatus,
@@ -34,10 +35,17 @@ beforeEach(() => {
 
 describe('AnimeListPage', () => {
   it('mostra os esqueletos e depois os 12 cards da primeira página', async () => {
-    renderWithClient(<AnimeListPage />)
+    const { container } = renderWithClient(<AnimeListPage />)
 
+    // A grade de esqueletos é escondida do leitor de tela, então não tem papel para buscar:
+    // vai pelo atributo, como na story do SkeletonGrid.
+    const skeletons = () => container.querySelector('[aria-hidden="true"]')
     expect(screen.getByText('Carregando animes...')).toBeInTheDocument()
-    expect(await screen.findByText('12 animes carregados')).toBeInTheDocument()
+    expect(skeletons()?.children).toHaveLength(12)
+    expect(cardTitles()).toEqual([])
+
+    expect(await screen.findByText('12 animes de All Formats carregados')).toBeInTheDocument()
+    expect(skeletons()).toBeNull()
     expect(cardTitles()).toEqual(fixtureTitles(0, 12))
 
     // A nota vai da resposta da AniList até a cor do selo: uma de cada faixa.
@@ -57,7 +65,7 @@ describe('AnimeListPage', () => {
   it('filtra por formato: marca o botão, escreve na URL e mostra só aquele formato', async () => {
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
 
     await user.click(screen.getByRole('button', { name: 'Movie' }))
 
@@ -67,9 +75,29 @@ describe('AnimeListPage', () => {
       'false',
     )
     expect(window.location.search).toBe('?format=MOVIE')
-    expect(await screen.findByText('5 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('5 animes de Movie carregados')).toBeInTheDocument()
     const movies = animeFixtures.filter((fixture) => fixture.format === 'MOVIE')
     expect(cardTitles()).toEqual(movies.map((fixture) => fixture.anime.title))
+  })
+
+  it('ao trocar de filtro, os cards antigos ficam esmaecidos até os novos chegarem', async () => {
+    const user = userEvent.setup()
+    renderWithClient(<AnimeListPage />)
+    await screen.findByText('12 animes de All Formats carregados')
+    let release = () => {}
+    server.use(respondAfter(new Promise<void>((resolve) => (release = resolve))))
+
+    await user.click(screen.getByRole('button', { name: 'Movie' }))
+
+    // A resposta de Movie ainda não chegou: os cards de All Formats continuam, marcados.
+    expect(cardTitles()).toEqual(fixtureTitles(0, 12))
+    expect(screen.getByRole('list', { name: 'Animes' })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByText('Carregando animes...')).toBeInTheDocument()
+
+    release()
+
+    expect(await screen.findByText('5 animes de Movie carregados')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Animes' })).toHaveAttribute('aria-busy', 'false')
   })
 
   it('digitar não faz pedido; só o botão "Buscar" envia a busca', async () => {
@@ -77,10 +105,11 @@ describe('AnimeListPage', () => {
     server.use(captureVariables((variables) => sent.push(variables)))
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
 
     await user.type(screen.getByRole('searchbox', { name: 'Buscar anime' }), 'naruto')
     expect(sent).toHaveLength(1)
+    expect(window.location.search).toBe('')
 
     await user.click(screen.getByRole('button', { name: 'Buscar' }))
     await waitFor(() => expect(sent).toHaveLength(2))
@@ -91,23 +120,25 @@ describe('AnimeListPage', () => {
   it('Enter envia a busca e o foco continua no campo', async () => {
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
     const field = screen.getByRole('searchbox', { name: 'Buscar anime' })
 
     await user.type(field, 'Hoshi{Enter}')
 
-    expect(await screen.findByText('3 animes carregados')).toBeInTheDocument()
+    expect(
+      await screen.findByText('3 animes de All Formats para "Hoshi" carregados'),
+    ).toBeInTheDocument()
     expect(field).toHaveFocus()
   })
 
   it('"Ver mais" soma 12 cards, foca o 13º e some na última página', async () => {
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
 
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
 
-    expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('24 animes de All Formats carregados')).toBeInTheDocument()
     expect(cardTitles()).toEqual(fixtureTitles(0, 24))
     const thirteenth = screen.getByRole('heading', { name: animeFixtures[12].anime.title })
     await waitFor(() => expect(thirteenth.closest('li')).toHaveFocus())
@@ -117,20 +148,20 @@ describe('AnimeListPage', () => {
   it('"Ver mais" de um filtro não move o foco depois que o usuário troca de filtro', async () => {
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
-    await screen.findByText('24 animes carregados')
+    await screen.findByText('24 animes de All Formats carregados')
     // Daqui em diante, a página 2 de qualquer filtro fica sem resposta.
     server.use(respondNeverOnPage(2))
     await user.click(screen.getByRole('button', { name: 'TV Show' }))
-    await screen.findByText('10 animes carregados')
+    await screen.findByText('10 animes de TV Show carregados')
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
     await screen.findByRole('button', { name: 'Carregando...' })
 
     // Volta para All Formats, que está no cache com 24 cards, antes da página 2 de TV chegar.
     await user.click(screen.getByRole('button', { name: 'All Formats' }))
 
-    expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('24 animes de All Formats carregados')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'All Formats' })).toHaveFocus()
   })
 
@@ -140,11 +171,11 @@ describe('AnimeListPage', () => {
     server.use(respondWithPages([animes.slice(0, 12), animes.slice(11, 14)]))
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
 
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
 
-    expect(await screen.findByText('14 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('14 animes de All Formats carregados')).toBeInTheDocument()
     expect(cardTitles()).toEqual(fixtureTitles(0, 14))
     // O foco vai para o primeiro card realmente novo, não para o repetido.
     const firstNew = screen.getByRole('heading', { name: animes[12].title })
@@ -154,7 +185,7 @@ describe('AnimeListPage', () => {
   it('erro no "Ver mais" mantém os cards e deixa tentar de novo pelo mesmo botão', async () => {
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
     server.use(respondWithStatus(500))
 
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
@@ -167,18 +198,18 @@ describe('AnimeListPage', () => {
     server.resetHandlers()
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
 
-    expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('24 animes de All Formats carregados')).toBeInTheDocument()
   })
 
   it('falha ao atualizar uma lista na tela mantém os cards e não fala do "Ver mais"', async () => {
     // Cache vencido na hora: voltar a um filtro já visto pede a lista de novo.
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />, { staleTime: 0 })
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
-    await screen.findByText('24 animes carregados')
+    await screen.findByText('24 animes de All Formats carregados')
     await user.click(screen.getByRole('button', { name: 'Movie' }))
-    await screen.findByText('5 animes carregados')
+    await screen.findByText('5 animes de Movie carregados')
     server.use(respondWithStatus(500))
 
     await user.click(screen.getByRole('button', { name: 'All Formats' }))
@@ -190,7 +221,7 @@ describe('AnimeListPage', () => {
     server.resetHandlers()
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }))
 
-    expect(await screen.findByText('24 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('24 animes de All Formats carregados')).toBeInTheDocument()
     expect(screen.queryByText('Não foi possível atualizar a lista.')).not.toBeInTheDocument()
   })
 
@@ -204,7 +235,7 @@ describe('AnimeListPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Limpar busca' }))
 
-    expect(await screen.findByText('12 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('12 animes de All Formats carregados')).toBeInTheDocument()
     expect(window.location.search).toBe('')
     expect(screen.getByRole('searchbox', { name: 'Buscar anime' })).toHaveValue('')
   })
@@ -219,7 +250,7 @@ describe('AnimeListPage', () => {
     server.resetHandlers()
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }))
 
-    expect(await screen.findByText('12 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('12 animes de All Formats carregados')).toBeInTheDocument()
   })
 
   it('abrir a página com filtro e busca na URL já começa com os dois preenchidos', () => {
@@ -234,14 +265,14 @@ describe('AnimeListPage', () => {
   it('o Voltar do navegador devolve o campo de busca ao valor anterior', async () => {
     const user = userEvent.setup()
     renderWithClient(<AnimeListPage />)
-    await screen.findByText('12 animes carregados')
+    await screen.findByText('12 animes de All Formats carregados')
     const field = screen.getByRole('searchbox', { name: 'Buscar anime' })
     await user.type(field, 'Hoshi{Enter}')
-    await screen.findByText('3 animes carregados')
+    await screen.findByText('3 animes de All Formats para "Hoshi" carregados')
 
     act(() => window.history.back())
 
     await waitFor(() => expect(field).toHaveValue(''))
-    expect(await screen.findByText('12 animes carregados')).toBeInTheDocument()
+    expect(await screen.findByText('12 animes de All Formats carregados')).toBeInTheDocument()
   })
 })

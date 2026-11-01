@@ -23,6 +23,11 @@ export const FORMAT_OPTIONS = [
   { value: 'MUSIC', label: 'Music' },
 ] as const satisfies readonly FormatOption[]
 
+// Texto do botão de um formato, para dizer em palavras qual lista está na tela.
+export function formatLabel(value: FormatFilter): string {
+  return FORMAT_OPTIONS.find((option) => option.value === value)?.label ?? value
+}
+
 // Confere um valor vindo de fora (a URL) antes de usá-lo como filtro.
 export function isFormatFilter(value: string | null): value is FormatFilter {
   return FORMAT_OPTIONS.some((option) => option.value === value)

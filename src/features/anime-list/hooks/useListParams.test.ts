@@ -22,6 +22,10 @@ describe('parseListParams', () => {
   it('cai em ALL quando o formato da URL não é um botão', () => {
     expect(parseListParams('?format=XYZ')).toEqual({ format: 'ALL', search: '' })
   })
+
+  it('tira os espaços das pontas da busca vinda da URL (um link editado à mão)', () => {
+    expect(parseListParams('?search=%20%20naruto%20')).toEqual({ format: 'ALL', search: 'naruto' })
+  })
 })
 
 describe('useListParams', () => {

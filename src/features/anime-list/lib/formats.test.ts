@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { isFormatFilter } from './formats'
+import { formatLabel, isFormatFilter } from './formats'
+
+describe('formatLabel', () => {
+  it.each([
+    ['ALL', 'All Formats'],
+    ['TV', 'TV Show'],
+    ['MUSIC', 'Music'],
+  ] as const)('%s vira o texto do botão, "%s"', (value, label) => {
+    expect(formatLabel(value)).toBe(label)
+  })
+})
 
 describe('isFormatFilter', () => {
   it.each(['ALL', 'MOVIE', 'TV_SHORT'])('aceita o valor de um botão (%s)', (value) => {

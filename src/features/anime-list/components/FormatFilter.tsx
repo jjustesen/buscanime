@@ -11,6 +11,8 @@ export interface FormatFilterProps {
 
 /** Os 8 botões de formato do Figma. Só um fica marcado (`aria-pressed`). */
 export function FormatFilter({ value, onChange }: FormatFilterProps) {
+  // Botões com `aria-pressed`, não um grupo de rádio: o Figma mostra botões, e um grupo de
+  // rádio pede navegação por setas.
   return (
     <div role="group" aria-label="Filtrar por formato" className={styles.group}>
       {FORMAT_OPTIONS.map((option) => (

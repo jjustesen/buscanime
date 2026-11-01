@@ -8,6 +8,7 @@ import { SkeletonGrid } from './components/SkeletonGrid'
 import { StatusMessage, type StatusMessageProps } from './components/StatusMessage'
 import { useAnimeList } from './hooks/useAnimeList'
 import { useListParams } from './hooks/useListParams'
+import { formatLabel } from './lib/formats'
 import type { ListParams } from './types'
 
 /** Card que deve receber o foco quando a página pedida pelo "Ver mais" chegar. */
@@ -76,6 +77,7 @@ export function AnimeListPage() {
       <StatusMessage
         status={messageStatus()}
         count={list.animes.length}
+        formatLabel={formatLabel(params.format)}
         search={params.search}
         onRetry={list.retry}
         onClear={() => setParams({ ...params, search: '' })}

@@ -11,7 +11,12 @@ export interface StatusMessageProps {
   status: 'pending' | 'error' | 'loadMoreError' | 'refreshError' | 'success'
   /** Quantos animes estão na tela. */
   count: number
-  /** Busca atual, para a mensagem de lista vazia. String vazia quando não há busca. */
+  /** Texto do botão do formato escolhido ("TV Show"), para o anúncio dizer qual lista carregou. */
+  formatLabel: string
+  /**
+   * Busca atual, para o anúncio da lista carregada e a mensagem de lista vazia. String
+   * vazia quando não há busca.
+   */
   search: string
   /** Pede a lista de novo, depois de um erro sem cards ou de uma atualização que falhou. */
   onRetry: () => void
@@ -23,10 +28,23 @@ export interface StatusMessageProps {
  * Os estados que o Figma não mostra: carregando, erro e vazio. Fica numa região
  * `aria-live`, então o leitor de tela também ouve quantos animes carregaram.
  */
-export function StatusMessage({ status, count, search, onRetry, onClear }: StatusMessageProps) {
+export function StatusMessage({
+  status,
+  count,
+  formatLabel,
+  search,
+  onRetry,
+  onClear,
+}: StatusMessageProps) {
   // Carregando e carregado têm só texto para o leitor de tela; os esqueletos e os cards já
   // mostram o estado. Nesses casos a região sai do fluxo, para não abrir um vão na página.
   const screenReaderOnly = status === 'pending' || (status === 'success' && count > 0)
+
+  // O formato e a busca no texto: a região só é anunciada quando o texto muda, então trocar
+  // entre duas listas de 12 animes, sem esse contexto, passaria calado.
+  const context = search ? `de ${formatLabel} para "${search}"` : `de ${formatLabel}`
+  const loaded =
+    count === 1 ? `1 anime ${context} carregado` : `${count} animes ${context} carregados`
 
   return (
     // A região existe sempre: o leitor de tela só anuncia mudanças de uma região que já
@@ -34,11 +52,7 @@ export function StatusMessage({ status, count, search, onRetry, onClear }: Statu
     <div aria-live="polite" data-screen-reader-only={screenReaderOnly} className={styles.status}>
       {status === 'pending' && <p className="visually-hidden">Carregando animes...</p>}
 
-      {status === 'success' && count > 0 && (
-        <p className="visually-hidden">
-          {count === 1 ? '1 anime carregado' : `${count} animes carregados`}
-        </p>
-      )}
+      {status === 'success' && count > 0 && <p className="visually-hidden">{loaded}</p>}
 
       {status === 'error' && (
         <>
