@@ -54,8 +54,9 @@ atualizado ao fim de cada etapa.
   recomendação e mantive o Figma, porque o enunciado manda reproduzi-lo; o problema
   ficou registrado no `DECISIONS.md`.
 - **API testada antes de planejar.** A IA rodou a query real na AniList com `curl`.
-  Isso confirmou que filtros nulos são ignorados e revelou o limite atual de **30
-  pedidos por minuto** (a documentação fala em 90). O plano passou a incluir cache de
+  Isso revelou o limite atual de **30 pedidos por minuto** (a documentação fala em
+  90). A IA também concluiu que filtros nulos são ignorados, o que estava errado para
+  o formato (ver a seção das Tasks 4 e 5). O plano passou a incluir cache de
   5 minutos e nova tentativa no erro 429.
 - **Repetidos no "Ver mais".** A IA notou que, com a ordem "em alta", a lista muda
   entre páginas e o mesmo anime pode voltar. O plano remove repetidos pelo `id`.
@@ -186,6 +187,7 @@ atualizado ao fim de cada etapa.
   de 24 animes "em alta" tinha nota na API real, o que contrariaria o Figma (nota em
   todo card). Antes de levar isso a mim como decisão, o agente principal consultou a
   API: 11 de 12 animes da primeira página têm nota. A ordem "em alta" foi mantida.
+  (Depois se viu que o subagente estava certo sobre a página; ver o último item.)
 - **Mudança de plano justificada:** o plano previa remontar a barra de busca com
   `key`; o subagente viu no navegador que isso tirava o foco do campo ao apertar
   Enter, e usou o padrão do React de ajustar o estado durante o render.
@@ -208,3 +210,13 @@ atualizado ao fim de cada etapa.
 - **O que não segui:** a revisão sugeriu trocar os botões de formato por um grupo de
   rádio. Mantive os botões, porque é o que o Figma mostra, e registrei no
   `DECISIONS.md`.
+- **Um bug que só apareceu com a API real.** Ao abrir a página no navegador, nenhum
+  card tinha nota. O agente principal comparou pedidos direto na AniList e achou a
+  causa: `format: null` não é ignorado, como a IA tinha concluído no começo; ele
+  filtra animes sem formato definido (anúncios que ainda não estrearam, sem nota).
+  Os testes não pegavam porque o mock tratava `null` como "todos". A correção: a
+  chave `format` só é enviada quando há filtro, o teste do pedido passou a exigir
+  isso (falhou antes da correção) e o mock passou a imitar a AniList de verdade.
+  Isso também explica a afirmação "só 1 de 24 tem nota" do subagente da Task 5, que
+  eu tinha rejeitado: ele olhou a página, eu olhei a API sem o `format: null`. Os dois
+  viram coisas reais, e só comparar os pedidos mostrou a diferença.

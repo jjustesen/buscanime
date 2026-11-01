@@ -22,8 +22,10 @@ Lembretes das convenções que mais afetam este plano:
 - Exports nomeados. Comentários em português, código em inglês.
 
 A API é a AniList (GraphQL, `POST https://graphql.anilist.co`), sem autenticação e com
-CORS liberado. Ela limita a 30 pedidos por minuto e ignora argumentos nulos, então
-`format: null` significa "todos os formatos".
+CORS liberado. Ela limita a 30 pedidos por minuto. `search: null` é ignorado, mas
+`format: null` **não**: filtra animes sem formato definido. Para "todos os formatos",
+a chave `format` não é enviada. (Corrigido depois da Task 5; o plano original dizia
+que todo argumento nulo era ignorado.)
 
 O enunciado exige `AI_LOG.md` e `DECISIONS.md`. Atualize os dois ao fim de cada task,
 com o que foi decidido, verificado, corrigido ou rejeitado.
