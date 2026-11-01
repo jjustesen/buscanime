@@ -1,0 +1,17 @@
+/* A cor vem de quem usa o logo (header e footer pintam o texto de branco). */
+.logo {
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.logo[data-size='lg'] {
+  font-size: 40px;
+}
+
+.logo[data-size='sm'] {
+  font-size: 24px;
+}
+
+.highlight {
+  color: var(--color-warning);
+}

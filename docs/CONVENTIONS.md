@@ -35,10 +35,14 @@ App → features/ → components/ → styles/
   resposta da AniList para os tipos do domínio (`Anime`). O formato da API nunca chega
   a um componente.
 - Uma feature não importa de outra. O que for compartilhado sobe para `components/`
-  ou para um `lib/` na raiz.
+  ou para um `lib/` na raiz. (Com uma feature só, esta regra é checada na revisão,
+  não no lint.)
 - `components/` não importa de `features/` nem de `api/`.
 - `lib/` só tem funções puras: sem React, sem `fetch`, sem `window`.
-- Checado por `no-restricted-imports` no ESLint.
+- Tipos seguem a mesma direção: o que `api/` precisa (como `Format`) é definido em
+  `api/`, e a feature importa de lá.
+- As regras de `api/`, `components/` e `lib/` são checadas por `no-restricted-imports`
+  no ESLint.
 
 ## 2. Componentes
 
@@ -51,7 +55,8 @@ App → features/ → components/ → styles/
 - Props em `interface <Nome>Props`, com descrição em cada prop (seção 5).
 - Só a página e os hooks buscam dados. Componentes de apresentação recebem tudo por
   props e avisam mudanças por callbacks (`onChange`, `onSearch`).
-- Sem `style={}` inline, exceto para valor que vem do dado (a cor média da capa).
+- Sem `style={}` inline, exceto para valor que vem do dado (a cor média da capa) e em
+  decorators de stories (o fundo roxo atrás do logo branco, por exemplo).
 
 ## 3. Estilo
 
@@ -80,10 +85,13 @@ antes do código.
 - `as` só na fronteira da API, com comentário.
 - Sem non-null assertion (`!`).
 - Uniões de strings em vez de `enum` (`'low' | 'mid' | 'high'`).
-- **Toda `interface`, todo `type` de objeto e cada uma das suas propriedades têm um
-  comentário JSDoc.** O comentário diz o significado e os casos especiais, não repete
-  o nome. O Storybook usa esses comentários na tabela de props. Checado por
-  `jsdoc/require-jsdoc`.
+- **Toda `interface`, todo `type` e cada uma das suas propriedades têm um comentário
+  JSDoc.** O comentário diz o significado e os casos especiais, não repete o nome. O
+  Storybook usa esses comentários na tabela de props. Checado por
+  `jsdoc/require-jsdoc`, sem correção automática (um `/** */` vazio não vale).
+- Parâmetro em forma de objeto usa um tipo com nome (`request: AnimePageRequest`), não
+  um tipo escrito na assinatura (`{ page: number }`): o lint cobra JSDoc nas
+  propriedades dos dois.
 
 ```ts
 /** Anime já convertido da resposta da AniList para o formato que a tela usa. */
@@ -118,7 +126,7 @@ export interface Anime {
 - As stories rodam como testes (`@storybook/addon-vitest`) e passam pelo axe
   (`@storybook/addon-a11y`). Desligar uma regra do axe exige comentário na story e
   registro no `DECISIONS.md`.
-- `tags: ['autodocs']` em todo `meta`, para gerar a página de documentação.
+- `tags: ['autodocs']` fica no `.storybook/preview.ts` e vale para todas as stories.
 
 ## 8. Desempenho e acessibilidade
 
@@ -128,6 +136,12 @@ export interface Anime {
 - HTML semântico primeiro (`button`, `ul`, `h2`, `form`). ARIA só onde o HTML não
   basta. O lint do `jsx-a11y` precisa passar.
 - Imagens sempre com `alt` (vazio quando decorativa), `loading` e tamanho reservado.
+- Lista sem marcadores usa `<ul role="list">`: o Safari com VoiceOver tira a semântica
+  de lista de um `ul` com `list-style: none`. O reset de lista fica no módulo do
+  componente, não no CSS global.
+- Texto em caixa alta é guardado em caixa normal e transformado com
+  `text-transform: uppercase`, para o leitor de tela não soletrar.
+- Altura de faixa (header, footer) usa `min-height`, para o zoom de texto não cortar.
 - Dependência nova de produção só com justificativa no `DECISIONS.md` e o
   `size-limit` passando.
 
@@ -144,8 +158,9 @@ export interface Anime {
 
 - Uma task do plano é um branch `feature/<nome>` e um PR. Commits pequenos.
 - Antes de dizer que terminou, rodar e mostrar a saída de
-  `npm run lint && npm run typecheck && npm test && npm run build && npm run size`
+  `npm run lint && npm run format:check && npm run typecheck && npm test && npm run build && npm run size`
   (skill `verify`).
+- Dependência entra no PR que a usa pela primeira vez, não antes.
 - Ao fim de cada task, atualizar o `AI_LOG.md` (o que a IA gerou, o que foi
   verificado, corrigido ou rejeitado) e o `DECISIONS.md` quando houver decisão.
 - Divergência com o Figma ou com o enunciado: parar e perguntar ao dono.

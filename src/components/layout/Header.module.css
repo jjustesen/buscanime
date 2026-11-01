@@ -1,0 +1,8 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+  color: var(--color-white);
+  background: var(--color-primary);
+}

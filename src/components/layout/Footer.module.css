@@ -1,0 +1,14 @@
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 54px;
+  color: var(--color-white);
+  background: var(--color-primary);
+}
+
+.rights {
+  font-size: 10px;
+  text-transform: uppercase;
+}

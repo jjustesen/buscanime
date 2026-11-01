@@ -1,0 +1,16 @@
+/* Nomes iguais às variáveis do Figma (docs/figma/spec.md). */
+:root {
+  --color-primary: #6324c6;
+  --color-primary-light1: #774dc5;
+  --color-success: #01ada6;
+  --color-warning: #ffb800;
+  --color-danger: #e92151;
+  --color-gray-light1: #c4cad4;
+  --color-gray: #a7b0be;
+  --color-gray-light2: #e2e5e9;
+  --color-white: #ffffff;
+  --font-family: 'Mulish', system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --content-width: 1316px;
+}

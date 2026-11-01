@@ -57,6 +57,7 @@ Criados na Task 1 e usados em todas as tasks:
 
 ```bash
 npm run lint             # ESLint
+npm run format:check     # Prettier (npm run format corrige)
 npm run typecheck        # tsc -b
 npm test                 # vitest run: projeto "unit" (jsdom) + projeto "storybook" (Chromium)
 npm run test:unit        # só o projeto "unit", mais rápido no dia a dia
@@ -103,7 +104,15 @@ Não se aplica: projeto novo.
 ---
 
 ### Task 1: Base do projeto (PR1)
-Status: TODO
+Status: COMPLETED
+
+> **O que mudou na execução** (detalhes no `DECISIONS.md`): TypeScript 6.0 e ESLint 9
+> (limites do typescript-eslint e do jsx-a11y), eslint-plugin-jsdoc 63 (Node 24.11),
+> sem `.storybook/vitest.setup.ts` (o plugin do Storybook 10 já aplica o preview),
+> `@size-limit/file` em vez do preset-app, fontes e tokens importados pelo
+> `global.css` (sem `fonts.ts`), `tags: ['autodocs']` uma vez só no `preview.ts`,
+> Prettier checado no CI, `msw` e `user-event` instalados só nas tasks que os usam.
+> O código abaixo é o plano original.
 
 #### Files
 - Create: `package.json`, `vite.config.ts`, `tsconfig.json`, `tsconfig.app.json`,
@@ -291,7 +300,7 @@ Use the pull-request-manager and the ci-handler skills.
 Status: TODO
 
 #### Files
-- Create: `src/features/anime-list/lib/formats.ts`
+- Create: `src/features/anime-list/lib/formats.ts`, `src/features/anime-list/types.ts`
 - Create: `src/api/types.ts`, `src/api/queries.ts`, `src/api/anilist.ts`
 - Create: `src/test/mocks/handlers.ts`, `src/test/mocks/server.ts`,
   `src/test/mocks/fixtures.ts`
@@ -300,8 +309,32 @@ Status: TODO
 
 #### Pseudocode
 
+Instalar o que esta task usa pela primeira vez: `npm i -D msw`.
+
+**Quem é dono de quê:** `api/` não pode importar de `features/` (regra de lint da
+Task 1). Por isso `api/` é dona do tipo `Format` (os formatos da AniList) e recebe
+`format: Format | null`. A feature é dona do `'ALL'`, dos rótulos dos botões e do
+`ListParams`; o `useAnimeList` (Task 5) converte `'ALL'` em `null`.
+
 ```ts
-// formats.ts
+// api/types.ts (trecho)
+/** Formatos de mídia da AniList que a tela filtra. */
+export type Format = 'TV' | 'TV_SHORT' | 'MOVIE' | 'SPECIAL' | 'OVA' | 'ONA' | 'MUSIC'
+
+/** Pedido de uma página de animes à AniList. */
+export interface AnimePageRequest {
+  /** Página pedida, começando em 1. */
+  page: number
+  /** Formato filtrado, ou `null` para todos. */
+  format: Format | null
+  /** Texto buscado. String vazia significa "sem busca". */
+  search: string
+}
+```
+
+```ts
+// features/anime-list/lib/formats.ts
+import type { Format } from '../../../api/types'
 export const FORMAT_OPTIONS = [
   { value: 'ALL', label: 'All Formats' },
   { value: 'TV', label: 'TV Show' },
@@ -311,9 +344,29 @@ export const FORMAT_OPTIONS = [
   { value: 'OVA', label: 'OVA' },
   { value: 'ONA', label: 'ONA' },
   { value: 'MUSIC', label: 'Music' },
-] as const
-export type FormatFilter = (typeof FORMAT_OPTIONS)[number]['value']
+] as const satisfies readonly FormatOption[]
+
+/** Valor de um botão de formato: `ALL` (sem filtro) ou um formato da AniList. */
+export type FormatFilter = 'ALL' | Format
+/** Um botão de formato, com o texto exato do Figma. */
+export interface FormatOption {
+  /** Valor enviado ao escolher o botão. */
+  value: FormatFilter
+  /** Texto do botão, idêntico ao Figma. */
+  label: string
+}
 export function isFormatFilter(value: string | null): value is FormatFilter
+```
+
+```ts
+// features/anime-list/types.ts
+/** Filtros da lista, espelhados na URL. */
+export interface ListParams {
+  /** Formato escolhido nos botões; `ALL` não filtra. */
+  format: FormatFilter
+  /** Texto buscado. String vazia significa "sem busca". */
+  search: string
+}
 ```
 
 ```ts
@@ -351,15 +404,11 @@ export interface AnimePage {
   /** `true` quando existe uma próxima página; controla o botão "Ver mais". */
   hasNextPage: boolean
 }
-
-/** Filtros da lista, espelhados na URL. */
-export interface ListParams {
-  /** Formato escolhido nos botões; `ALL` não filtra. */
-  format: FormatFilter
-  /** Texto buscado. String vazia significa "sem busca". */
-  search: string
-}
 ```
+
+O `jsdoc/require-jsdoc` também cobra propriedades de tipos escritos dentro de uma
+assinatura (`params: { page: number }`). Por isso todo parâmetro de objeto usa um tipo
+com nome, como o `AnimePageRequest`.
 
 Os tipos crus da resposta da AniList (`AniListMedia`, `AniListPageResponse`) ficam
 dentro de `anilist.ts`, não são exportados e também levam JSDoc.
@@ -390,13 +439,13 @@ export class AniListError extends Error {
   get retryable() { return this.status === undefined || this.status === 429 || this.status >= 500 }
 }
 
-export async function fetchAnimePage(params: ListParams & { page: number }, signal?: AbortSignal): Promise<AnimePage> {
-  const search = params.search.trim()
+export async function fetchAnimePage(request: AnimePageRequest, signal?: AbortSignal): Promise<AnimePage> {
+  const search = request.search.trim()
   const variables = {
-    page: params.page,
+    page: request.page,
     perPage: PAGE_SIZE,
     search: search || null,
-    format: params.format === 'ALL' ? null : params.format,
+    format: request.format,
     sort: search ? ['SEARCH_MATCH'] : ['TRENDING_DESC'],
   }
   let response: Response
@@ -532,7 +581,7 @@ export function AnimeCard({ anime, priority = 'lazy' }: AnimeCardProps) {
       <div className={styles.content}>
         <h2 className={styles.title}>{anime.title}</h2>
         {anime.genres.length > 0 && (
-          <ul className={styles.genres} aria-label="Gêneros">
+          <ul role="list" className={styles.genres} aria-label="Gêneros">
             {anime.genres.map((g) => <li key={g} className={styles.chip}>{g}</li>)}
           </ul>
         )}
@@ -542,6 +591,9 @@ export function AnimeCard({ anime, priority = 'lazy' }: AnimeCardProps) {
   )
 }
 ```
+
+O `role="list"` explícito precisa de uma exceção no lint, adicionada nesta task:
+`'jsx-a11y/no-redundant-roles': ['error', { ul: ['list'] }]`.
 
 CSS do card (valores de `docs/figma/spec.md`): altura 270 px, `border-radius:
 var(--radius-md)`, `overflow: hidden`, `position: relative`. O degradê é um `::after`
@@ -680,7 +732,13 @@ Status: TODO
 - Create: `src/assets/icon-add.svg` (copiar de `docs/figma/icon-add.svg`)
 - Modify: `src/main.tsx` (regra de `retry` no `QueryClient`)
 - Modify: `src/App.tsx` (renderiza `AnimeListPage` dentro do `<main>`)
+- Create: `src/test/renderWithClient.tsx` (renderiza com um `QueryClient` novo,
+  `retry: false`)
+- Modify: `src/App.test.tsx` (passa a usar `renderWithClient`, porque o App agora monta
+  a página que usa o TanStack Query)
 - Test: `src/features/anime-list/AnimeListPage.test.tsx`
+
+Instalar o que esta task usa pela primeira vez: `npm i -D @testing-library/user-event`.
 
 #### Pseudocode
 
@@ -698,7 +756,11 @@ new QueryClient({ defaultOptions: { queries: {
 export function useAnimeList(params: ListParams) {
   const query = useInfiniteQuery({
     queryKey: ['anime', params.format, params.search],
-    queryFn: ({ pageParam, signal }) => fetchAnimePage({ ...params, page: pageParam }, signal),
+    queryFn: ({ pageParam, signal }) =>
+      fetchAnimePage(
+        { page: pageParam, search: params.search, format: params.format === 'ALL' ? null : params.format },
+        signal,
+      ),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasNextPage ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
@@ -721,10 +783,12 @@ export function useAnimeList(params: ListParams) {
 ```
 
 ```tsx
-// SearchBar.tsx — o texto digitado é estado local; só sobe no envio
-export function SearchBar({ initialValue, onSearch }) {
+// SearchBar.tsx — o texto digitado é estado local; só sobe no envio.
+// Sem useEffect para sincronizar com a URL (o lint proíbe setState em efeito):
+// a página renderiza <SearchBar key={params.search} ...>, então o botão voltar
+// do navegador remonta o componente com o valor novo.
+export function SearchBar({ initialValue, onSearch }: SearchBarProps) {
   const [text, setText] = useState(initialValue)
-  useEffect(() => setText(initialValue), [initialValue])   // botão voltar do navegador
   return (
     <form role="search" className={styles.form} onSubmit={(e) => { e.preventDefault(); onSearch(text) }}>
       <label htmlFor="search" className="visually-hidden">Buscar anime</label>
@@ -751,7 +815,7 @@ export function AnimeListPage() {
   return (
     <>
       <FormatFilter value={params.format} onChange={(format) => setParams({ ...params, format })} />
-      <SearchBar initialValue={params.search} onSearch={(search) => setParams({ ...params, search })} />
+      <SearchBar key={params.search} initialValue={params.search} onSearch={(search) => setParams({ ...params, search })} />
       <StatusMessage status={list.status} count={list.animes.length} search={params.search}
         onRetry={() => list.refetch()} onClear={() => setParams({ ...params, search: '' })} />
       {list.animes.length > 0 && (
@@ -771,7 +835,9 @@ export function AnimeListPage() {
   "Limpar busca";
 - sucesso com itens: texto só para leitor de tela, "<n> animes carregados".
 
-`AnimeGrid`: `<ul>` com `aria-busy={busy}` e `opacity: .5` quando `busy`. Cada `<li>`
+`AnimeGrid`: `<ul role="list">` com `aria-busy={busy}` e `opacity: .5` quando `busy`.
+O `role="list"` é proposital: o Safari com VoiceOver tira a semântica de lista de um
+`ul` com `list-style: none`. Cada `<li>`
 tem `tabIndex={-1}`. Num `useEffect` depois de os animes mudarem, se `focusIndex.current`
 não for nulo, foca o `<li>` desse índice e zera o ref. Os 4 primeiros cards recebem
 `priority="eager"` e o primeiro `"high"`.
