@@ -31,10 +31,20 @@ export const Idle: Story = {
   },
 }
 
-/** Próxima página carregando: desabilitado e com "Carregando...". */
+/**
+ * Próxima página carregando: "Carregando...", marcado como desabilitado sem perder o foco
+ * (com `disabled`, o navegador tiraria o foco do botão), e o clique não pede de novo.
+ */
 export const Loading: Story = {
   args: { loading: true },
-  play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: 'Carregando...' })).toBeDisabled()
+  play: async ({ args, canvas, userEvent }) => {
+    const button = canvas.getByRole('button', { name: 'Carregando...' })
+    await expect(button).toHaveAttribute('aria-disabled', 'true')
+
+    button.focus()
+    await userEvent.click(button)
+
+    await expect(button).toHaveFocus()
+    await expect(args.onClick).not.toHaveBeenCalled()
   },
 }

@@ -16,6 +16,6 @@
   cursor: pointer;
 }
 
-.button:disabled {
+.button[aria-disabled='true'] {
   cursor: progress;
 }

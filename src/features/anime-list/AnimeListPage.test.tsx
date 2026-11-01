@@ -143,6 +143,8 @@ describe('AnimeListPage', () => {
 
     expect(await screen.findByText(/Não foi possível carregar mais animes/)).toBeInTheDocument()
     expect(cardTitles()).toEqual(fixtureTitles(0, 12))
+    // O foco não saiu do botão enquanto ele carregava, então dá para tentar de novo dali.
+    expect(screen.getByRole('button', { name: 'Ver mais' })).toHaveFocus()
 
     server.resetHandlers()
     await user.click(screen.getByRole('button', { name: 'Ver mais' }))
