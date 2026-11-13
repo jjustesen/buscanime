@@ -36,3 +36,14 @@ export const WithValue: Story = {
     await expect(args.onSearch).toHaveBeenCalledWith('one piece')
   },
 }
+
+/** Esvaziar o campo (como o X do navegador faz) limpa a busca na hora, sem clicar em "Buscar". */
+export const Cleared: Story = {
+  args: { value: 'one piece' },
+  play: async ({ args, canvas, userEvent }) => {
+    await userEvent.clear(canvas.getByRole('searchbox', { name: 'Buscar anime' }))
+
+    await expect(args.onSearch).toHaveBeenCalledOnce()
+    await expect(args.onSearch).toHaveBeenCalledWith('')
+  },
+}

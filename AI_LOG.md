@@ -281,3 +281,17 @@ atualizado ao fim de cada etapa.
   e o `preconnect`, a IA rodou o Lighthouse de novo (3 vezes no mobile). O ícone
   levou "boas práticas" a 100; o `preconnect` não mudou o LCP. O `DECISIONS.md`
   registra as duas coisas, em vez de só a que deu certo.
+
+### Correção: o X do campo de busca não limpava a busca
+
+- **O problema, achado por mim no uso:** depois de buscar "Naruto", o X do campo
+  esvaziava só o texto na tela. A busca continuava na URL, então trocar de aba
+  trazia "Naruto" de volta, com o campo vazio.
+- **Causa, confirmada pela IA no código:** o X é o botão do próprio navegador nos
+  campos `type="search"`. Ele não envia o formulário, e a troca de aba copia a
+  busca que está na URL.
+- **Correção:** quando o campo fica vazio (pelo X ou apagando tudo), o `SearchBar`
+  já limpa a busca. Digitar outro texto continua sem buscar até o "Buscar".
+- **Conferência:** a IA escreveu primeiro um teste que reproduz o problema e falhou
+  antes da correção. Depois rodou todos os testes, o type check, o lint e o
+  Prettier, e repetiu o caminho no app rodando localmente.

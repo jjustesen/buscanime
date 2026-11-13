@@ -5,11 +5,14 @@ import styles from './SearchBar.module.css'
 export interface SearchBarProps {
   /** Busca atual (a da URL). Quando muda por fora, como no Voltar do navegador, o campo segue. */
   value: string
-  /** Chamado ao enviar (botão "Buscar" ou Enter) com o texto do campo, sem tratar. */
+  /** Chamado ao enviar (botão "Buscar" ou Enter) com o texto do campo, sem tratar, e com `''` quando o campo fica vazio. */
   onSearch: (text: string) => void
 }
 
-/** Campo de busca e botão "Buscar" do Figma. Digitar não busca; só enviar. */
+/**
+ * Campo de busca e botão "Buscar" do Figma. Digitar não busca; só enviar. A exceção é
+ * esvaziar o campo: aí a busca é limpa na hora.
+ */
 export function SearchBar({ value, onSearch }: SearchBarProps) {
   const inputId = useId()
   // O texto digitado é estado local: só sobe para a URL ao enviar.
@@ -41,7 +44,13 @@ export function SearchBar({ value, onSearch }: SearchBarProps) {
         className={styles.input}
         placeholder="Digite algo aqui..."
         value={text}
-        onChange={(event) => setText(event.target.value)}
+        onChange={(event) => {
+          const next = event.target.value
+          setText(next)
+          // Campo vazio (pelo X do navegador ou apagando tudo) já tira a busca da URL. Sem
+          // isso, a busca antiga ficava valendo escondida e voltava ao trocar de aba.
+          if (next === '' && value !== '') onSearch('')
+        }}
       />
       <button type="submit" className={styles.button}>
         Buscar

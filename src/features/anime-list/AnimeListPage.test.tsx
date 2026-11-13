@@ -225,6 +225,26 @@ describe('AnimeListPage', () => {
     expect(screen.queryByText('Não foi possível atualizar a lista.')).not.toBeInTheDocument()
   })
 
+  it('esvaziar o campo (o X do navegador) tira a busca da URL, e trocar a aba não a traz de volta', async () => {
+    const user = userEvent.setup()
+    renderWithClient(<AnimeListPage />)
+    await screen.findByText('12 animes de All Formats carregados')
+    const field = screen.getByRole('searchbox', { name: 'Buscar anime' })
+    await user.type(field, 'Hoshi{Enter}')
+    await screen.findByText('3 animes de All Formats para "Hoshi" carregados')
+
+    // `clear` esvazia o campo com um evento de input, como o X do campo de busca faz.
+    await user.clear(field)
+
+    expect(window.location.search).toBe('')
+    expect(await screen.findByText('12 animes de All Formats carregados')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Movie' }))
+
+    expect(window.location.search).toBe('?format=MOVIE')
+    expect(await screen.findByText('5 animes de Movie carregados')).toBeInTheDocument()
+  })
+
   it('lista vazia mostra a mensagem, e "Limpar busca" volta à lista', async () => {
     window.history.replaceState(null, '', '/?search=zzz')
     const user = userEvent.setup()
