@@ -1,0 +1,17 @@
+/* O reset da lista fica aqui, não no CSS global (docs/CONVENTIONS.md, seção 8). */
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-gray-light2);
+  background: var(--color-primary-light1);
+}

@@ -1,4 +1,4 @@
-import type { Anime, Format } from '../../api/types'
+import type { Anime, AnimeDetail, Format } from '../../api/types'
 import amberCover from './covers/amber.svg'
 import purpleCover from './covers/purple.svg'
 import tealCover from './covers/teal.svg'
@@ -53,6 +53,23 @@ export const animeBrokenImage: Anime = {
   cover: { large: '/missing-cover.jpg', color: '#e46b50' },
   genres: ['Horror'],
   averageScore: 55,
+}
+
+// Sinopse do mock como a AniList manda: com `<br>` e `<i>` no meio do texto.
+export function fixtureDescription(anime: Anime): string {
+  return `${anime.title} é um anime de <i>exemplo</i>.<br><br>Segundo parágrafo da sinopse.`
+}
+
+// Os mesmos animes, já convertidos para a página de detalhes (sinopse limpa).
+export const animeDetailHighScore: AnimeDetail = {
+  ...animeHighScore,
+  description: `${animeHighScore.title} é um anime de exemplo.
+
+Segundo parágrafo da sinopse.`,
+}
+export const animeDetailNoDescription: AnimeDetail = {
+  ...animeNoScore,
+  description: null,
 }
 
 // 24 animes (2 páginas de 12) com formatos misturados, na ordem em que o mock responde.

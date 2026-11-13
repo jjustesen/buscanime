@@ -1,0 +1,16 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 25px;
+}
+
+/* Alinha o link de voltar com a borda da coluna do conteúdo. */
+.back {
+  align-self: center;
+  width: 100%;
+  max-width: var(--content-width);
+  font-weight: 600;
+  color: var(--color-primary);
+}

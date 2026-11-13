@@ -48,3 +48,12 @@ export interface AnimePage {
   /** `true` quando existe uma próxima página; controla o botão "Ver mais". */
   hasNextPage: boolean
 }
+
+/** Anime da página de detalhes: tudo do card, mais a descrição. */
+export interface AnimeDetail extends Anime {
+  /**
+   * Sinopse em texto puro, com parágrafos separados por linha em branco. `null` quando a
+   * AniList não tem sinopse. Em `genres` vêm todos os gêneros, não só os 3 do card.
+   */
+  description: string | null
+}

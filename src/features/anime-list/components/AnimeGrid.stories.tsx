@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect } from 'storybook/test'
+import { expect, fn } from 'storybook/test'
 import { animeFixtures } from '../../../test/mocks/fixtures'
 import { AnimeGrid } from './AnimeGrid'
 
@@ -8,7 +8,7 @@ const firstPage = animeFixtures.slice(0, 12).map((fixture) => fixture.anime)
 
 const meta = {
   component: AnimeGrid,
-  args: { animes: firstPage, busy: false },
+  args: { animes: firstPage, busy: false, onOpen: fn() },
   parameters: {
     a11y: {
       // As mesmas exceções das stories do AnimeCard, pelos mesmos motivos (DECISIONS.md):

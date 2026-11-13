@@ -275,4 +275,18 @@ describe('AnimeListPage', () => {
     await waitFor(() => expect(field).toHaveValue(''))
     expect(await screen.findByText('12 animes de All Formats carregados')).toBeInTheDocument()
   })
+
+  it('"Ver detalhes" leva para a página do anime, sem recarregar', async () => {
+    const user = userEvent.setup()
+    renderWithClient(<AnimeListPage />)
+
+    // Espera os cards chegarem; só então busca o link pelo nome, que é caro no jsdom.
+    await screen.findAllByRole('heading', { level: 2 })
+    const link = screen.getByRole('link', {
+      name: `Ver detalhes de ${animeFixtures[0].anime.title}`,
+    })
+    await user.click(link)
+
+    expect(window.location.pathname).toBe(`/anime/${animeFixtures[0].anime.id}`)
+  })
 })

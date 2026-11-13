@@ -49,27 +49,37 @@
   color: var(--color-white);
 }
 
-/* O reset da lista fica aqui, não no CSS global (docs/CONVENTIONS.md, seção 8). */
-.genres {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 11px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chip {
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  color: var(--color-gray-light2);
-  background: var(--color-primary-light1);
-}
-
 .score {
   position: absolute;
   z-index: 1;
   right: 8px;
   bottom: 11px;
+}
+
+/* Link do canto inferior esquerdo, na altura do selo de nota. Fundo roxo sólido: o fim do
+   degradê é claro, e texto branco direto sobre a capa não passa no contraste. */
+.details {
+  position: absolute;
+  z-index: 1;
+  left: 28px;
+  bottom: 11px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 17px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-white);
+  text-decoration: none;
+  background: var(--color-primary);
+}
+
+.details:hover {
+  background: var(--color-primary-light1);
+}
+
+/* O contorno padrão é roxo, a cor do próprio link; sobre a capa precisa ser branco. */
+.details:focus-visible {
+  outline-color: var(--color-white);
 }

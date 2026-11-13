@@ -1,0 +1,1 @@
+{ "rewrites": [{ "source": "/anime/:path*", "destination": "/index.html" }] }

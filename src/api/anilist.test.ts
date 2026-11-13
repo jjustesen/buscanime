@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { animeHighScore } from '../test/mocks/fixtures'
 import {
   captureVariables,
   respondNever,
@@ -9,7 +10,14 @@ import {
   respondWithStatus,
 } from '../test/mocks/handlers'
 import { server } from '../test/mocks/server'
-import { AniListError, fetchAnimePage, shouldRetry, type AnimePageVariables } from './anilist'
+import {
+  AniListError,
+  cleanDescription,
+  fetchAnimeDetail,
+  fetchAnimePage,
+  shouldRetry,
+  type AnimePageVariables,
+} from './anilist'
 import type { AnimePageRequest } from './types'
 
 const firstPage: AnimePageRequest = { page: 1, format: null, search: '' }
@@ -221,5 +229,42 @@ describe('shouldRetry', () => {
     ['erro que não é da AniList', new TypeError('bug no código')],
   ])('%s: nunca tenta de novo', (_, error) => {
     expect(shouldRetry(0, error)).toBe(false)
+  })
+})
+
+describe('fetchAnimeDetail', () => {
+  it('devolve o anime com todos os gêneros e a sinopse sem HTML', async () => {
+    const anime = await fetchAnimeDetail(animeHighScore.id)
+
+    expect(anime).toMatchObject({
+      id: animeHighScore.id,
+      title: animeHighScore.title,
+      genres: animeHighScore.genres,
+      averageScore: animeHighScore.averageScore,
+    })
+    expect(anime.description).toBe(
+      `${animeHighScore.title} é um anime de exemplo.\n\nSegundo parágrafo da sinopse.`,
+    )
+  })
+
+  it('um ID que não existe vira erro 404, que não vale repetir', async () => {
+    const error = await fetchAnimeDetail(999999).catch((e: unknown) => e)
+
+    expect(error).toBeInstanceOf(AniListError)
+    expect(error).toMatchObject({ message: 'Not Found.', status: 404, retryable: false })
+  })
+})
+
+describe('cleanDescription', () => {
+  it('troca <br> por quebra de linha e tira as outras tags', () => {
+    expect(cleanDescription('Um<br>dois<br /><br/>três <i>itálico</i>')).toBe(
+      'Um\ndois\n\ntrês itálico',
+    )
+  })
+
+  it('devolve null quando não há sinopse ou só sobra espaço', () => {
+    expect(cleanDescription(null)).toBeNull()
+    expect(cleanDescription('')).toBeNull()
+    expect(cleanDescription('  <br>  ')).toBeNull()
   })
 })

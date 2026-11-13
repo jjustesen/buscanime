@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, waitFor, within } from 'storybook/test'
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test'
 import {
   animeBrokenImage,
   animeHighScore,
@@ -12,6 +12,7 @@ import { AnimeCard } from './AnimeCard'
 
 const meta = {
   component: AnimeCard,
+  args: { onOpen: fn() },
   // O card ocupa a largura de quem o usa. Aqui ele tem a largura de uma coluna do Figma.
   decorators: [
     (Story) => (
@@ -133,5 +134,16 @@ export const Eager: Story = {
     const cover = canvas.getByRole('presentation')
     await expect(cover).toHaveAttribute('loading', 'eager')
     await expect(cover).not.toHaveAttribute('fetchpriority', 'high')
+  },
+}
+
+/** "Ver detalhes" é um link real (abre em nova aba); o clique simples avisa `onOpen`. */
+export const OpenDetails: Story = {
+  args: { anime: animeHighScore },
+  play: async ({ canvas, args }) => {
+    const link = canvas.getByRole('link', { name: `Ver detalhes de ${animeHighScore.title}` })
+    await expect(link).toHaveAttribute('href', `/anime/${animeHighScore.id}`)
+    await userEvent.click(link)
+    await expect(args.onOpen).toHaveBeenCalledWith(animeHighScore.id)
   },
 }

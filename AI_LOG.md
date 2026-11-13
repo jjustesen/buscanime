@@ -281,3 +281,23 @@ atualizado ao fim de cada etapa.
   e o `preconnect`, a IA rodou o Lighthouse de novo (3 vezes no mobile). O ícone
   levou "boas práticas" a 100; o `preconnect` não mudou o LCP. O `DECISIONS.md`
   registra as duas coisas, em vez de só a que deu certo.
+
+### Página de detalhes
+
+- **O que a IA fez:** consulta por ID na API, `fetchAnimeDetail` e `cleanDescription`;
+  rota feita à mão (`useRoute`, `parseRoute`); página e componente de detalhes; link
+  "Ver detalhes" no card; `GenreList` tirado do card; mock do MSW para a query nova;
+  testes e stories; `vercel.json`.
+- **Decisão minha:** simplificar. Sem tratamento detalhado de erro (só carregando e uma
+  mensagem), sem Figma, reusando os componentes atuais.
+- **Verificado:** lint, Prettier, tipos, testes (jsdom e stories no Chromium), build e
+  `size-limit` (83 kB de 100). Também abri a lista e a página com a API real: o link
+  leva ao anime certo, a sinopse aparece sem HTML e o Voltar do navegador funciona.
+- **Corrigido durante o trabalho:**
+  - Os dois handlers do MSW liam o corpo do mesmo pedido; o segundo falhava com "Body
+    is unusable". Passaram a ler uma cópia.
+  - O axe reprovou o link branco sobre a capa (contraste 3,2). Ganhou fundo roxo sólido.
+  - Uma regex escrita por script virou quebra de linha de verdade dentro da string; o
+    `tsc` pegou.
+- **Rejeitado:** biblioteca de rotas (peso) e feature nova só para os detalhes (quebraria
+  a regra de importação entre features).

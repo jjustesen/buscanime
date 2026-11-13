@@ -23,3 +23,24 @@ export const ANIME_PAGE_QUERY = `
     }
   }
 `
+
+// Um anime só, pelo ID. `asHtml: false` pede texto sem HTML, mas a AniList ainda deixa
+// `<br>` e `<i>` no meio; a limpeza final fica em `cleanDescription` (anilist.ts).
+export const ANIME_DETAIL_QUERY = `
+  query AnimeDetail($id: Int) {
+    Media(id: $id, type: ANIME) {
+      id
+      title {
+        romaji
+        userPreferred
+      }
+      coverImage {
+        extraLarge
+        color
+      }
+      genres
+      averageScore
+      description(asHtml: false)
+    }
+  }
+`

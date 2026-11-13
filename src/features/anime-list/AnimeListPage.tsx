@@ -8,7 +8,9 @@ import { SkeletonGrid } from './components/SkeletonGrid'
 import { StatusMessage, type StatusMessageProps } from './components/StatusMessage'
 import { useAnimeList } from './hooks/useAnimeList'
 import { useListParams } from './hooks/useListParams'
+import { navigate } from './hooks/useRoute'
 import { formatLabel } from './lib/formats'
+import { animePath } from './lib/route'
 import type { ListParams } from './types'
 
 /** Card que deve receber o foco quando a página pedida pelo "Ver mais" chegar. */
@@ -71,7 +73,14 @@ export function AnimeListPage() {
       {pending && list.animes.length === 0 ? (
         <SkeletonGrid />
       ) : (
-        list.animes.length > 0 && <AnimeGrid ref={gridRef} animes={list.animes} busy={pending} />
+        list.animes.length > 0 && (
+          <AnimeGrid
+            ref={gridRef}
+            animes={list.animes}
+            busy={pending}
+            onOpen={(id) => navigate(animePath(id))}
+          />
+        )
       )}
 
       <StatusMessage

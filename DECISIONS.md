@@ -251,9 +251,35 @@ acessibilidade em cada uma.
 - **CI no GitHub Actions:** lint, Prettier, typecheck, testes (jsdom e Chromium),
   build e limite de tamanho do JavaScript (100 kB gzip; hoje ~82 kB).
 
+## Página de detalhes
+
+Pedida depois do desafio, sem tela no Figma. O layout é simples e usa só os tokens e
+componentes que já existem (`ScoreBadge`, e o `GenreList`, tirado do card para servir às
+duas telas).
+
+- **Rota feita à mão, sem biblioteca.** O app tem duas páginas (`/` e `/anime/<id>`).
+  `useRoute` segue o mesmo desenho do `useListParams` (`pushState` mais `popstate`).
+  Uma biblioteca de rotas custaria 15 a 20 kB gzip, e o limite é 100 kB (hoje 83).
+- **Fica na feature `anime-list`**, por pedido do dono, e não numa feature nova. Assim a
+  página usa o `ScoreBadge` sem quebrar a regra de uma feature não importar de outra.
+- **"Ver detalhes" é um link (`<a href>`), não um botão**, porque muda de página: abre em
+  nova aba com Ctrl ou botão do meio, e o leitor de tela anuncia "link". O nome inclui o
+  título, para os 12 links da lista serem distintos. O fundo é roxo sólido: o fim do
+  degradê do card é claro, e branco sobre a capa não passa no contraste.
+- **Consulta por ID** (`ANIME_DETAIL_QUERY`). A sinopse chega com `<br>` e `<i>`;
+  `cleanDescription` troca quebras por linha e tira as outras tags. O texto vai para a
+  tela como texto (o React escapa), nunca como HTML.
+- **Gêneros:** a página mostra todos; o card continua com 3.
+- **Estados mínimos, de propósito:** "Carregando..." e uma mensagem de erro. Não há
+  tela própria para ID inexistente, sem sinopse longa ou capa quebrada além do
+  básico. O erro 404 da AniList cai na mesma mensagem.
+- **Vercel:** `vercel.json` manda `/anime/*` para o `index.html`, senão abrir ou
+  recarregar um link de detalhes dá 404.
+- **"Voltar para a lista" leva à raiz**, sem filtro. O botão Voltar do navegador
+  mantém o filtro e a busca, porque eles moram na URL.
+
 ## Fora do escopo
 
-- Página de detalhes do anime.
 - Modo escuro.
 - Busca enquanto digita (o Figma tem botão "Buscar").
 - Testes E2E com Playwright.

@@ -1,5 +1,5 @@
-import { ANIME_PAGE_QUERY } from './queries'
-import type { Anime, AnimePage, AnimePageRequest, Format } from './types'
+import { ANIME_DETAIL_QUERY, ANIME_PAGE_QUERY } from './queries'
+import type { Anime, AnimeDetail, AnimePage, AnimePageRequest, Format } from './types'
 
 export const ANILIST_ENDPOINT = 'https://graphql.anilist.co'
 
@@ -20,6 +20,12 @@ export interface AnimePageVariables {
   sort: MediaSort[]
 }
 
+/** Variáveis da `ANIME_DETAIL_QUERY`. */
+export interface AnimeDetailVariables {
+  /** ID da AniList do anime pedido. */
+  id: number
+}
+
 /** Ordens da AniList que o app usa. */
 type MediaSort = 'TRENDING_DESC' | 'SEARCH_MATCH'
 
@@ -37,7 +43,9 @@ interface AniListResponse {
 /** O `data` da resposta. */
 interface AniListData {
   /** A página pedida. `null` quando a query falhou. */
-  Page: AniListPage | null
+  Page?: AniListPage | null
+  /** O anime pedido pelo ID. `null` quando o ID não existe. */
+  Media?: AniListMediaDetail | null
 }
 
 /** Um erro do GraphQL. */
@@ -76,6 +84,12 @@ export interface AniListMedia {
   genres: string[] | null
   /** Nota média de 0 a 100. */
   averageScore: number | null
+}
+
+/** Um anime da query de detalhes: o mesmo da lista, mais a sinopse. */
+interface AniListMediaDetail extends AniListMedia {
+  /** Sinopse com restos de HTML (`<br>`, `<i>`). */
+  description: string | null
 }
 
 /** Títulos que a query pede. */
@@ -122,6 +136,30 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
   return failureCount < 2 && error instanceof AniListError && error.retryable
 }
 
+// Manda um pedido à AniList e devolve a resposta com o corpo já lido. Só trata a rede: o
+// que fazer com o status e com `errors` fica com quem chamou.
+async function post(query: string, variables: object, signal?: AbortSignal) {
+  let response: Response
+  try {
+    response = await fetch(ANILIST_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ query, variables }),
+      signal,
+    })
+  } catch (error) {
+    // Cancelado de propósito (o filtro mudou): cancelar não é falha, repassa como veio.
+    if (signal?.aborted) throw error
+    throw new AniListError('Não foi possível falar com a AniList.', undefined, { cause: error })
+  }
+
+  // Fronteira da API: o único `as` do cliente. Os tipos acima seguem a nulidade do
+  // schema, então o resto do código trata cada campo que pode faltar. Corpo que não é
+  // JSON (a página de erro de um proxy, por exemplo) vira `null`.
+  const body = (await response.json().catch(() => null)) as AniListResponse | null
+  return { response, body }
+}
+
 export async function fetchAnimePage(
   request: AnimePageRequest,
   signal?: AbortSignal,
@@ -138,24 +176,7 @@ export async function fetchAnimePage(
   // ignorado: devolve só animes sem formato definido (anúncios, ainda sem nota).
   if (request.format) variables.format = request.format
 
-  let response: Response
-  try {
-    response = await fetch(ANILIST_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ query: ANIME_PAGE_QUERY, variables }),
-      signal,
-    })
-  } catch (error) {
-    // Cancelado de propósito (o filtro mudou): cancelar não é falha, repassa como veio.
-    if (signal?.aborted) throw error
-    throw new AniListError('Não foi possível falar com a AniList.', undefined, { cause: error })
-  }
-
-  // Fronteira da API: o único `as` do cliente. Os tipos acima seguem a nulidade do
-  // schema, então o resto do código trata cada campo que pode faltar. Corpo que não é
-  // JSON (a página de erro de um proxy, por exemplo) vira `null`.
-  const body = (await response.json().catch(() => null)) as AniListResponse | null
+  const { response, body } = await post(ANIME_PAGE_QUERY, variables, signal)
 
   const page = body?.data?.Page
   if (!response.ok || !page) {
@@ -186,4 +207,37 @@ function toAnime(media: AniListMedia): Anime {
     genres: (media.genres ?? []).slice(0, 3),
     averageScore: media.averageScore,
   }
+}
+
+// Um anime pela página de detalhes. Um ID que não existe volta como erro 404 da AniList.
+export async function fetchAnimeDetail(id: number, signal?: AbortSignal): Promise<AnimeDetail> {
+  const variables: AnimeDetailVariables = { id }
+  const { response, body } = await post(ANIME_DETAIL_QUERY, variables, signal)
+
+  const media = body?.data?.Media
+  if (!response.ok || !media) {
+    throw new AniListError(
+      body?.errors?.[0]?.message ?? `A AniList respondeu com status ${response.status}.`,
+      response.status,
+    )
+  }
+
+  return {
+    ...toAnime(media),
+    // Aqui vão todos os gêneros: a página de detalhes tem espaço, o card não.
+    genres: media.genres ?? [],
+    description: cleanDescription(media.description),
+  }
+}
+
+// A sinopse chega com `<br>` e `<i>` no meio do texto. Quebras viram linha, as outras
+// tags somem. Não é um sanitizador de HTML: o React já escapa o texto na tela, e este
+// resultado nunca entra como HTML.
+export function cleanDescription(raw: string | null): string | null {
+  if (!raw) return null
+  const text = raw
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .trim()
+  return text || null
 }

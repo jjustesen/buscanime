@@ -1,0 +1,51 @@
+/* Sem Figma para esta tela: usa os tokens e a mesma coluna da lista. */
+.detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+/* Capa na proporção das capas da AniList (460 × 650); a cor média segura o espaço. */
+.cover {
+  flex: 0 0 300px;
+  max-width: 100%;
+  aspect-ratio: 460 / 650;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-gray-light2);
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
+  display: flex;
+  flex: 1 1 320px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* O foco vem por código ao abrir a página; o contorno só atrapalharia. */
+.title:focus {
+  outline: none;
+}
+
+.description {
+  max-width: 70ch;
+  font-size: 16px;
+  line-height: 1.5;
+  /* Preserva as quebras de linha da sinopse sem precisar de HTML. */
+  white-space: pre-line;
+}

@@ -1,7 +1,12 @@
 import { delay, http, HttpResponse, type PathParams } from 'msw'
-import { ANILIST_ENDPOINT, type AniListMedia, type AnimePageVariables } from '../../api/anilist'
+import {
+  ANILIST_ENDPOINT,
+  type AniListMedia,
+  type AnimeDetailVariables,
+  type AnimePageVariables,
+} from '../../api/anilist'
 import type { Anime } from '../../api/types'
-import { animeFixtures } from './fixtures'
+import { animeFixtures, fixtureDescription } from './fixtures'
 
 /** Corpo do `POST` que o `fetchAnimePage` manda à AniList. */
 interface AnimePageRequestBody {
@@ -44,16 +49,57 @@ function fixturePage({ page, perPage, format, search }: AnimePageVariables) {
   return pageResponse(media, page, start + perPage < matches.length)
 }
 
-// Base dos handlers abaixo: responde ao POST da AniList com o corpo já tipado.
+// As duas queries do app vão para o mesmo endereço; o nome da operação diz qual é.
+function isDetailQuery(query: string) {
+  return query.includes('query AnimeDetail')
+}
+
+// Base dos handlers de lista: responde ao POST da AniList com o corpo já tipado. Pedido de
+// detalhes não é daqui: devolve `undefined` e o MSW segue para o próximo handler.
 function anilist(resolve: (variables: AnimePageVariables) => Response | Promise<Response>) {
   return http.post<PathParams, AnimePageRequestBody>(ANILIST_ENDPOINT, async ({ request }) => {
-    const body = await request.json()
+    // Cópia: o corpo só pode ser lido uma vez, e o outro handler também o lê.
+    const body = await request.clone().json()
+    if (isDetailQuery(body.query)) return undefined
     return resolve(body.variables)
   })
 }
 
-// Handler padrão: as 24 fixtures, filtradas e paginadas.
-export const handlers = [anilist((variables) => HttpResponse.json(fixturePage(variables)))]
+/** Corpo do `POST` da query de detalhes. */
+interface AnimeDetailRequestBody {
+  /** Texto da query GraphQL; o mock só olha o nome da operação. */
+  query: string
+  /** Variáveis da query: o ID do anime. */
+  variables: AnimeDetailVariables
+}
+
+// Detalhes de um anime das fixtures, pelo ID, com sinopse. ID que não existe responde como
+// a AniList: status 404 e `data.Media` nulo.
+function animeDetail() {
+  return http.post<PathParams, AnimeDetailRequestBody>(ANILIST_ENDPOINT, async ({ request }) => {
+    // Cópia: o corpo só pode ser lido uma vez, e o outro handler também o lê.
+    const body = await request.clone().json()
+    if (!isDetailQuery(body.query)) return undefined
+    const fixture = animeFixtures.find(({ anime }) => anime.id === body.variables.id)
+    if (!fixture) {
+      return HttpResponse.json(
+        { data: { Media: null }, errors: [{ message: 'Not Found.', status: 404 }] },
+        { status: 404 },
+      )
+    }
+    return HttpResponse.json({
+      data: {
+        Media: { ...toAniListMedia(fixture.anime), description: fixtureDescription(fixture.anime) },
+      },
+    })
+  })
+}
+
+// Handlers padrão: as 24 fixtures, filtradas e paginadas, e os detalhes de cada uma.
+export const handlers = [
+  anilist((variables) => HttpResponse.json(fixturePage(variables))),
+  animeDetail(),
+]
 
 // Os helpers abaixo trocam o handler num teste: `server.use(respondWithStatus(429))`.
 

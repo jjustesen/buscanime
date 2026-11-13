@@ -87,7 +87,7 @@ npm run size        # confere o JavaScript do app (limite de 100 kB gzip); rode 
 ```
 src/
 ├── api/                    cliente da AniList (query, conversão, erros)
-├── features/anime-list/    a página: componentes, hooks e funções puras
+├── features/anime-list/    a lista e a página de detalhes: componentes, hooks e funções puras
 ├── components/layout/      header, footer e logo
 ├── styles/                 tokens do Figma e CSS global
 ├── test/                   setup, API simulada (MSW) e fixtures
@@ -97,11 +97,11 @@ src/
 
 ### Onde estão os testes
 
-| O quê                                                                          | Arquivo                                      | Onde roda                     |
-| ------------------------------------------------------------------------------ | -------------------------------------------- | ----------------------------- |
-| Componentes (card, selo, filtros, busca, grade, "Ver mais", mensagens, layout) | `*.stories.tsx`, função `play` de cada story | Vitest no Chromium, com o axe |
-| Funções puras, hooks e o cliente da AniList                                    | `*.test.ts(x)`                               | Vitest no jsdom               |
-| A página inteira, com a API simulada (MSW)                                     | `AnimeListPage.test.tsx`                     | Vitest no jsdom               |
+| O quê                                                                          | Arquivo                                              | Onde roda                     |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------- |
+| Componentes (card, selo, filtros, busca, grade, "Ver mais", mensagens, layout) | `*.stories.tsx`, função `play` de cada story         | Vitest no Chromium, com o axe |
+| Funções puras, hooks e o cliente da AniList                                    | `*.test.ts(x)`                                       | Vitest no jsdom               |
+| A página inteira, com a API simulada (MSW)                                     | `AnimeListPage.test.tsx`, `AnimeDetailPage.test.tsx` | Vitest no jsdom               |
 
 Os componentes não têm `*.test.tsx` próprio: o teste deles é a story, que roda como
 teste no `npm test` e no CI. Assim cada estado é escrito uma vez e serve de

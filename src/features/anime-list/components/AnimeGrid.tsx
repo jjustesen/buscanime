@@ -9,6 +9,8 @@ export interface AnimeGridProps {
   animes: Anime[]
   /** `true` enquanto os cards na tela são do filtro anterior e os novos ainda não chegaram. */
   busy: boolean
+  /** Repassado a cada card: chamado com o ID do anime quando "Ver detalhes" é clicado. */
+  onOpen: AnimeCardProps['onOpen']
   /**
    * Ref para o `<ul>` da grade. A página usa para focar o primeiro card novo depois do
    * "Ver mais"; cada `<li>` aceita foco pelo código.
@@ -26,13 +28,13 @@ function coverPriority(index: number): AnimeCardProps['priority'] {
 }
 
 /** Grade de cards do Figma. Esmaece enquanto `busy`. */
-export function AnimeGrid({ animes, busy, ref }: AnimeGridProps) {
+export function AnimeGrid({ animes, busy, onOpen, ref }: AnimeGridProps) {
   return (
     <ul ref={ref} role="list" aria-label="Animes" aria-busy={busy} className={styles.grid}>
       {animes.map((anime, index) => (
         // tabIndex -1: o item pode receber foco pelo código, mas não entra no Tab.
         <li key={anime.id} tabIndex={-1} className={styles.item}>
-          <AnimeCard anime={anime} priority={coverPriority(index)} />
+          <AnimeCard anime={anime} onOpen={onOpen} priority={coverPriority(index)} />
         </li>
       ))}
     </ul>
